@@ -14,13 +14,19 @@ import (
 // This is the message broadcaster
 // All clients write to this goroutines channel
 // To broadcast messages to the server
-func server(c <-chan string) {
-    for msg := range c {
-        fmt.Println(msg)
+func server(serv *Server) {
+    
+    for msg := range serv.s_chan {
+        for key,_ := range serv.clients {
+            // add support for not writing to the client
+            // that sent the message
+            key.Write([]byte(msg)) 
+        }
+        fmt.Println(msg) 
     }
 }
 
-func handleConnection(conn net.Conn, serv *Server, s_chan chan string) {
+func handleConnection(conn net.Conn, serv *Server) {
     b := []byte("hey welcome to codechat\n")
     fmt.Println("new connection!")
     // Read first message from client
@@ -56,12 +62,12 @@ func handleConnection(conn net.Conn, serv *Server, s_chan chan string) {
         if msg == "exit" {
             delete(serv.clients, conn)
             conn.Close()
-            msg = "Client Left"
+            msg = "Client Left\n"
             getClients(serv)
-            s_chan <- msg
+            serv.s_chan <- msg
             return
         }
-        s_chan <- msg + "\n"
+        serv.s_chan <- msg + "\n"
         if err != nil {
             fmt.Println(err)
             conn.Close()
@@ -72,11 +78,13 @@ func handleConnection(conn net.Conn, serv *Server, s_chan chan string) {
 
 type Server struct {
     clients map[net.Conn] Client
+    // broadcasting channel
+    s_chan chan string
 }
 
 type Client struct {
     name string
-    channel chan string
+    w_chan chan string
 }
 
 func getClients(serv *Server) {
@@ -87,12 +95,17 @@ func getClients(serv *Server) {
 
 func main() {
     fmt.Println("CodeChat Server Starting")
-    s_chan := make(chan string)
-    go server(s_chan)
+
+    // Initialize the server
     serv := new(Server)
     serv.clients = make(map[net.Conn] Client)
-    ln,err := net.Listen("tcp",":8080")
+    serv.s_chan = make(chan string)
 
+    // Start the broadcaster
+    go server(serv)
+
+    // Set up networking
+    ln,err := net.Listen("tcp",":8080")
     if err != nil {
         fmt.Println("Error! Couldn't start server")
         return
@@ -103,6 +116,6 @@ func main() {
             fmt.Println("Error! Bad accept.")
             break
         }
-        go handleConnection(conn, serv, s_chan)
+        go handleConnection(conn, serv)
     }
 }
