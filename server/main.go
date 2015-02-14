@@ -17,9 +17,12 @@ type Server struct {
 	// broadcasting channel
 	s_chan chan string
 }
+
 // Some sort of a client datatype
 type Client struct {
-	name   string
+	name string
+	// Currently not used, but eventually we will need a way to
+	// Write back to any individual connection
 	w_chan chan string
 }
 
@@ -31,13 +34,15 @@ type Client struct {
 // Eventually we should ensure that the message is not written back to
 // the client that sent the message
 func broadcast(serv *Server) {
+	// loop on incoming messages from the servers chan
 	for msg := range serv.s_chan {
+		// send message to all clients
 		for key, _ := range serv.clients {
 			// add support for not writing to the client
 			// that sent the message
 			key.Write([]byte(msg))
 		}
-		fmt.Print(msg)
+		log(msg)
 	}
 }
 
@@ -53,13 +58,14 @@ func checkErr(e error) bool {
 	return false
 }
 
+// Simple logging function
 func log(msg string) {
 	fmt.Println(msg)
 }
 
 func getClients(serv *Server) {
 	for _, value := range serv.clients {
-		fmt.Println(value.name)
+		log(value.name)
 	}
 }
 
@@ -111,9 +117,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 			return
 		}
 		serv.s_chan <- msg + "\n"
-		if err != nil {
-			fmt.Println(err)
-			conn.Close()
+		if checkErr(err) {
 			break
 		}
 	}
