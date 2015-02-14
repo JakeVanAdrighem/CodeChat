@@ -39,8 +39,15 @@ func handleConnection(conn net.Conn, s_chan chan string) {
             conn.Close()
             break
         }    
-        n, err = conn.Write(buf[0:n])
-        s_chan <- string(buf[0:n])
+        //n, err = conn.Write(buf[0:n])
+        msg := string(buf[0:n-2])
+        if msg == "exit" {
+            conn.Close()
+            msg = "Client Left"
+            s_chan <- msg
+            return
+        }
+        s_chan <- msg + "\n"
         if err != nil {
             fmt.Println(err)
             conn.Close()
