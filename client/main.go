@@ -15,7 +15,7 @@ func main() {
 	}
 	defer c.Close()
 	b := []byte(`{"cmd":"connect","username":"gramasaurous"}`)
-	log.Println(b)
+	log.Println(string(b))
 	n,err := c.Write(b)
 	if err != nil || n == 0 {
 		log.Println(err)

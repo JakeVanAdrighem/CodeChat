@@ -7,65 +7,53 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"log"
 	"net"
 )
 
-// Some sort of a server datatype
+// Server datatype
 type Server struct {
 	clients map[net.Conn]Client
 	// broadcasting channel
-	s_chan chan string
+	serverChan chan string
 }
 
-// Some sort of a client datatype
+// Client datatype
 type Client struct {
+	conn net.Conn
 	name string
-	// Currently not used, but eventually we will need a way to
-	// Write back to any individual connection
-	w_chan chan string
+	clientChan chan string
 }
 
-// This is the message broadcaster; it is run as a goroutine on server
-// initialization. It sits and reads the server's chan, which each
-// client writes messages to. It then broadcasts the messages back to
-// each connection (writes directly to the connection, not message
-// passing back to the client)
-// Eventually we should ensure that the message is not written back to
-// the client that sent the message
 func broadcast(serv *Server) {
 	// loop on incoming messages from the servers chan
-	for msg := range serv.s_chan {
+	for msg := range serv.serverChan {
 		// send message to all clients
-		for key, _ := range serv.clients {
+		for key := range serv.clients {
 			// add support for not writing to the client
 			// that sent the message
 			key.Write([]byte(msg))
 		}
-		log(msg)
+		log.Println(msg)
 	}
 }
 
-// Passed an error, logs the error and returns true or false
+// Passed an error, log.Printlns the error and returns true or false
 // Should be used on an if statement to ensure proper termination
 // true  -> error
 // false -> no error
 func checkErr(e error) bool {
 	if e != nil {
-		fmt.Println("Error", e)
+		log.Println("Error", e)
 		return true
 	}
 	return false
 }
 
-// Simple logging function
-func log(msg string) {
-	fmt.Println(msg)
-}
-
 func getClients(serv *Server) {
 	for _, value := range serv.clients {
-		log(value.name)
+		log.Println(value.name)
 	}
 }
 
@@ -74,62 +62,38 @@ func handleConnection(conn net.Conn, serv *Server) {
 	// Send a welcome message and read the name
 	b := []byte("hey welcome to codechat\n")
 
-	log("new connection!")
 	_, err := conn.Write(b)
-
-	// Ensure the connection is closed before this routine exits
-	defer conn.Close()
-
 	if checkErr(err) {
 		return
 	}
-	// Read the first line
-	buf := make([]byte, 4096)
-	n, err := conn.Read(buf)
-	if checkErr(err) || n == 0 {
-		return
-	}
-	// Initialize a new Client
-	// give it a name and a channel
-	// Add it to the server's clients list
-	// Eventually, we will replace this with a command dispatcher
-	writeChan := make(chan string)
-	client := Client{string(buf[0 : n-2]), writeChan}
-	serv.clients[conn] = client
-
-	getClients(serv)
-
+	log.Println("new connection!")
+	// Ensure the connection is closed before this routine exits
+	defer conn.Close()
+	dec := json.NewDecoder(conn)
 	// Now we can handle all of the incoming messages on this client
 	for {
-		n, err := conn.Read(buf)
-		if checkErr(err) || n == 0 {
-			break
-		}
-		//n, err = conn.Write(buf[0:n])
-		msg := string(buf[0 : n-2])
-		// This is an example of handling commands
-		// allows the client to disconnect from the server
-		if msg == "exit" {
-			delete(serv.clients, conn)
-			msg = "Client Left\n"
-			getClients(serv)
-			serv.s_chan <- msg
-			return
-		}
-		serv.s_chan <- msg + "\n"
+		var v map[string]interface{}
+		err := dec.Decode(&v)
 		if checkErr(err) {
 			break
+		}
+		// log all of the json args:
+		for key,value := range(v) {
+			log.Println(key + ":", value)
+		}
+		if v["cmd"] != nil {
+			log.Println("Got a cmd")
 		}
 	}
 }
 
 func main() {
-	log("CodeChat Server Starting")
+	log.Println("CodeChat Server Starting")
 
 	// Initialize the server
 	serv := new(Server)
 	serv.clients = make(map[net.Conn]Client)
-	serv.s_chan = make(chan string)
+	serv.serverChan = make(chan string)
 
 	// Start the broadcaster
 	go broadcast(serv)

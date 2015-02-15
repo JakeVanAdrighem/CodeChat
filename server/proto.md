@@ -20,21 +20,27 @@ Adds the client to the chat server with the provided username:
 
 	{
 		"cmd":"connect",
-		"username":"<username"
+		"args":
+		[
+			"username":"<username"
+		]
 	}
 ### 2. rename ("old-username", "new-username")
 Changes the current client's username:
 
 	{
 		"cmd":"rename",
-		"old-username":"<old-username>",
-		"new-username":"<new-username>"
+		"args":
+		[
+			"old-username":"<old-username>",
+			"new-username":"<new-username>"
+		]
 	}
 
 ### 3. get-clients()
 
 	{
-		"cmd":"get-clients",
+		"cmd":"get-clients","args":[]
 
 	}
 
@@ -42,7 +48,7 @@ Changes the current client's username:
 Disconnects the client from the server:
 
 	{
-		"cmd":"exit"
+		"cmd":"exit","args":[]
 	}
 
 ##Status Messages
