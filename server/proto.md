@@ -6,7 +6,7 @@ by a set of commands and arguments formated as JSON with the form:
 
 	{
 		"cmd":"<command>",
-		[args ..]
+		args ...
 	}
 
 At the moment this is a rudimentary protocol specification required for
@@ -20,35 +20,28 @@ Adds the client to the chat server with the provided username:
 
 	{
 		"cmd":"connect",
-		"args":
-		[
-			"username":"<username"
-		]
+		"username":"<username"
 	}
 ### 2. rename ("old-username", "new-username")
 Changes the current client's username:
 
 	{
 		"cmd":"rename",
-		"args":
-		[
-			"old-username":"<old-username>",
-			"new-username":"<new-username>"
-		]
+		"oldname":"<old-username>",
+		"newname":"<new-username>"
 	}
 
 ### 3. get-clients()
 
 	{
-		"cmd":"get-clients","args":[]
-
+		"cmd":"get-clients"
 	}
 
 ### 4. exit()
 Disconnects the client from the server:
 
 	{
-		"cmd":"exit","args":[]
+		"cmd":"exit"
 	}
 
 ##Status Messages
