@@ -8,6 +8,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net"
 )
@@ -31,6 +32,7 @@ type Client struct {
 type Message struct {
 	conn net.Conn
 	msg  string
+	err  error
 }
 
 func broadcast(serv *Server) {
@@ -38,11 +40,10 @@ func broadcast(serv *Server) {
 	for msg := range serv.serverChan {
 		// send message to all clients
 		for client := range serv.clients {
-			// add support for not writing to the client
-			// that sent the message
 			client.Write([]byte(msg.msg))
 		}
-		log.Println(msg)
+		// add support for errors
+		log.Println(msg.msg)
 	}
 }
 
@@ -58,7 +59,7 @@ func checkErr(e error) bool {
 	return false
 }
 
-func getClients(serv *Server, conn net.Conn) {
+func getClients(serv *Server, conn net.Conn) (string, error) {
 	// Builds an array of names, as well as comma separated string
 	// just in case we'll need it later
 	names := make([]string, serv.numClients)
@@ -69,24 +70,43 @@ func getClients(serv *Server, conn net.Conn) {
 		nameStr += value.name + ", "
 		i++
 	}
-	msg := Message{conn, nameStr}
-	serv.serverChan <- msg
-	log.Println(names)
+	return nameStr, nil
 }
 
-func newClient(serv *Server, conn net.Conn, name string) {
+func newClient(serv *Server, conn net.Conn, name string) (string, error) {
 	w := make(chan string)
 	c := Client{conn, name, w}
 	serv.clients[conn] = c
-	msg := Message{conn, name + " " + "entered the chat."}
-	serv.serverChan <- msg
+	m := name + " " + "entered the chat."
+	//serv.serverChan <- msg
+	return m, nil
 }
 
-func deleteClient(serv *Server, conn net.Conn) {
+func deleteClient(serv *Server, conn net.Conn) (string, error) {
 	name := serv.clients[conn].name
 	delete(serv.clients, conn)
-	msg := Message{conn, name + " " + "has left the chat."}
-	serv.serverChan <- msg
+	m := name + " " + "has left the chat."
+	//serv.serverChan <- msg
+	return m, nil
+}
+
+func renameClient(serv *Server, conn net.Conn, newN string, oldN string) (string, error) {
+	var m string
+	var e error
+	if serv.clients[conn].name == oldN {
+		// have to delete the current client, and re-add it with the new name
+		// kind of lame, and i'm sure there's a better way.
+		// if we end up using channels to communicate with the connetions,
+		// this will most likely invalidate the channel, so instead we should
+		// mutate the name
+		deleteClient(serv, conn)
+		newClient(serv, conn, newN)
+		m = oldN + " " + "now known as" + " " + newN
+	} else {
+		m = "Failure. Oldname != newname"
+		e = errors.New("renameClient: Failed to rename client. oldname != newname")
+	}
+	return m, e
 }
 
 // Connection Handling
@@ -109,30 +129,40 @@ func handleConnection(conn net.Conn, serv *Server) {
 		if checkErr(err) {
 			break
 		}
-		// log all of the json args:
-		for key, value := range v {
-			log.Println(key+":", value)
-		}
-		if v["cmd"] != nil {
-			log.Println("Got a cmd: ", v["cmd"])
-		}
+		var m Message
+		var e error
+		var msg string
+		m.conn = conn
 		switch v["cmd"] {
 		case "connect":
-			if v["username"] != nil {
-				log.Println("new user:", v["username"].(string))
-				newClient(serv, conn, v["username"].(string))
+			if name, ok := v["username"]; ok {
+				msg, e = newClient(serv, conn, name.(string))
 			} else {
-				log.Println("no username given for connect cmd.")
+				e = errors.New("connect: no username given.")
 			}
 		case "rename":
-			if v["oldname"] != nil || v["newname"] != nil {
-
+			if oldN, ok1 := v["oldname"]; ok1 {
+				if newN, ok2 := v["newname"]; ok2 {
+					msg, e = renameClient(serv, conn, oldN.(string), newN.(string))
+				}
+			} else {
+				e = errors.New("rename: no name(s) given.")
 			}
 		case "exit":
-			deleteClient(serv, conn)
+			msg, e = deleteClient(serv, conn)
+		case "msg":
+			if message, ok := v["msg"]; ok {
+				msg = message.(string)
+			} else {
+				e = errors.New("msg: no message given.")
+			}
 		default:
-			log.Println("Bad JSON recieved")
+			// form an error message
+			e = errors.New("bad JSON given.")
 		}
+		m.msg = msg
+		m.err = e
+		serv.serverChan <- m
 	}
 }
 
