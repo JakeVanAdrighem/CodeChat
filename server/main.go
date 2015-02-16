@@ -14,7 +14,8 @@ import (
 
 // Server datatype
 type Server struct {
-	clients map[net.Conn]Client
+	clients    map[net.Conn]Client
+	numClients int
 	// broadcasting channel
 	serverChan chan Message
 }
@@ -45,22 +46,32 @@ func broadcast(serv *Server) {
 	}
 }
 
-// Passed an error, log.Printlns the error and returns true or false
+// Passed an error, logs the error and returns true or false
 // Should be used on an if statement to ensure proper termination
 // true  -> error
 // false -> no error
 func checkErr(e error) bool {
 	if e != nil {
-		log.Println("Error", e)
+		log.Println(e)
 		return true
 	}
 	return false
 }
 
-func getClients(serv *Server) {
+func getClients(serv *Server, conn net.Conn) {
+	// Builds an array of names, as well as comma separated string
+	// just in case we'll need it later
+	names := make([]string, serv.numClients)
+	i := 0
+	var nameStr string
 	for _, value := range serv.clients {
-		log.Println(value.name)
+		names[i] = value.name
+		nameStr += value.name + ", "
+		i++
 	}
+	msg := Message{conn, nameStr}
+	serv.serverChan <- msg
+	log.Println(names)
 }
 
 func newClient(serv *Server, conn net.Conn, name string) {
@@ -107,12 +118,20 @@ func handleConnection(conn net.Conn, serv *Server) {
 		}
 		switch v["cmd"] {
 		case "connect":
-			if v["cmd"] != nil {
+			if v["username"] != nil {
 				log.Println("new user:", v["username"].(string))
 				newClient(serv, conn, v["username"].(string))
+			} else {
+				log.Println("no username given for connect cmd.")
+			}
+		case "rename":
+			if v["oldname"] != nil || v["newname"] != nil {
+
 			}
 		case "exit":
 			deleteClient(serv, conn)
+		default:
+			log.Println("Bad JSON recieved")
 		}
 	}
 }
