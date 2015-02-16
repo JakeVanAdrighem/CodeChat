@@ -22,6 +22,14 @@ Adds the client to the chat server with the provided username:
 		"cmd":"connect",
 		"username":"<username"
 	}
+
+### 1. message ("message")
+
+	{
+		"cmd":"msg",
+		"msg":<message>
+	}
+
 ### 2. rename ("old-username", "new-username")
 Changes the current client's username:
 

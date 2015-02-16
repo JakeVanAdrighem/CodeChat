@@ -36,14 +36,19 @@ type Message struct {
 }
 
 func broadcast(serv *Server) {
-	// loop on incoming messages from the servers chan
+	// loop on incoming messages from the server's chan
 	for msg := range serv.serverChan {
 		// send message to all clients
+		from := serv.clients[msg.conn].name + "\n"
 		for client := range serv.clients {
+			if client == msg.conn {
+				continue
+			}
+			client.Write([]byte(from))
 			client.Write([]byte(msg.msg))
 		}
 		// add support for errors
-		log.Println(msg.msg)
+		log.Println("broadcast:", msg.msg)
 	}
 }
 
@@ -53,7 +58,7 @@ func broadcast(serv *Server) {
 // false -> no error
 func checkErr(e error) bool {
 	if e != nil {
-		log.Println(e)
+		log.Println("checkErr:", e)
 		return true
 	}
 	return false
@@ -150,16 +155,24 @@ func handleConnection(conn net.Conn, serv *Server) {
 			}
 		case "exit":
 			msg, e = deleteClient(serv, conn)
+			// expedite the write process so we can kill the connection
+			m.msg = msg
+			m.err = e
+			serv.serverChan <- m
+			conn.Close()
+			return
+		// lots of "msg" this "msg" that. this is a chat message.
 		case "msg":
+			log.Println("got a mesage")
 			if message, ok := v["msg"]; ok {
 				msg = message.(string)
 			} else {
 				e = errors.New("msg: no message given.")
 			}
 		default:
-			// form an error message
 			e = errors.New("bad JSON given.")
 		}
+		// write the message
 		m.msg = msg
 		m.err = e
 		serv.serverChan <- m
