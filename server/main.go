@@ -9,8 +9,10 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	// "flag" // for command line args
 	"log"
 	"net"
+	//	"strings"
 )
 
 // Server datatype
@@ -40,15 +42,17 @@ func broadcast(serv *Server) {
 	for msg := range serv.serverChan {
 		// send message to all clients
 		from := serv.clients[msg.conn].name + "\n"
+		i := 0
 		for client := range serv.clients {
 			if client == msg.conn {
 				continue
 			}
 			client.Write([]byte(from))
 			client.Write([]byte(msg.msg))
+			i++
 		}
 		// add support for errors
-		log.Println("broadcast:", msg.msg)
+		log.Println("broadcast:", msg.msg, "to", i, "clients.")
 	}
 }
 
@@ -132,6 +136,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 		var v map[string]interface{}
 		err := dec.Decode(&v)
 		if checkErr(err) {
+			deleteClient(serv, conn)
 			break
 		}
 		var m Message
