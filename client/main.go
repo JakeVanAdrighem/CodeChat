@@ -4,7 +4,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"flag"
+	//"fmt"
 	"log"
 	"net"
 	"os"
@@ -16,6 +17,11 @@ type Message struct {
 	Msg string `json:"msg"`
 }
 
+type Connect struct {
+	Cmd      string `json:"cmd"`
+	Username string `json:"username"`
+}
+
 func read(conn net.Conn) {
 	b := make([]byte, 4096)
 	for {
@@ -24,11 +30,12 @@ func read(conn net.Conn) {
 			log.Println("")
 			return
 		}
-		fmt.Println(string(b))
+		//fmt.Println(string(b))
 	}
 }
 
 func main() {
+	var username = flag.String("u", "gramasaurous", "username")
 	c, err := net.Dial("tcp", "127.0.0.1:8080")
 	if err != nil {
 		log.Println(err)
@@ -38,7 +45,8 @@ func main() {
 
 	go read(c)
 
-	b := []byte(`{"cmd":"connect","username":"gramasaurous"}`)
+	user := Connect{"connect", *username}
+	b, err := json.Marshal(user)
 
 	n, err := c.Write(b)
 	if err != nil || n == 0 {
@@ -55,13 +63,13 @@ func main() {
 		}
 		readStr := strings.TrimSpace(string(read))
 		m := Message{"msg", readStr}
-		fmt.Println(m)
+		//fmt.Println(m)
 		b, e := json.Marshal(m)
 		if e != nil {
 			log.Println("somethin happened...")
 			continue
 		}
 		c.Write(b)
-		fmt.Println(b)
+		//fmt.Println(b)
 	}
 }
