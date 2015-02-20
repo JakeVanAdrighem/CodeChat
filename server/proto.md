@@ -52,6 +52,27 @@ Disconnects the client from the server:
 		"cmd":"exit"
 	}
 
+## Text Editing Commands
+
+### 1. requestWriteAccess()
+
+    {
+        "cmd": "requestWriteAccess"
+    }
+    
+### 2. yieldWriteAccess()
+
+    {
+        "cmd":"yieldWriteAccess"
+    }
+
+### 3. updateFile(file)
+
+    {
+        "cmd":"updateFile",
+        "file":file
+    }
+
 ##Status Messages
 Status of commands are always returned back to the client from the
 server as JSON:
@@ -92,6 +113,25 @@ When an existing client exits the chat:
 		"cmd":"client-exit",
 		"user":"<username>"
 	}
+
+When the text file is updated:
+    
+    {
+        "cmd":"updateFile",
+        "file":new-file
+    }
+    
+When write access is yielded:
+
+    {
+        "cmd":"writeAccessYielded"
+    }
+ 
+When write access is granted:
+
+    {
+        "cmd":"writeAccessGranted"
+    }
 
 Note that clients are responsible for keeping a list of current clients
 in the chat. So appropriate actions should be taken to notify the client

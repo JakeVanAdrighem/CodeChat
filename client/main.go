@@ -4,8 +4,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"flag"
-	//"fmt"
 	"log"
 	"net"
 	"os"
@@ -23,19 +23,27 @@ type Connect struct {
 }
 
 func read(conn net.Conn) {
-	b := make([]byte, 4096)
+	//b := make([]byte, 4096)
+	d := json.NewDecoder(conn)
 	for {
-		n, e := conn.Read(b)
-		if e != nil || n == 0 {
-			log.Println("")
-			return
-		}
-		//fmt.Println(string(b))
+	    var v map[string]interface{}
+	    err := d.Decode(&v)
+	    if err != nil {
+	        log.Println("err, bad json")
+	        continue
+	    }
+	    
+//		n, e := conn.Read(b)
+//		if e != nil || n == 0 {
+//			log.Println("error.")
+//			return
+//		}
+//		fmt.Println(string(b))
 	}
 }
 
 func main() {
-	var username = flag.String("u", "gramasaurous", "username")
+    flag.Parse()
 	c, err := net.Dial("tcp", "127.0.0.1:8080")
 	if err != nil {
 		log.Println(err)
@@ -45,7 +53,10 @@ func main() {
 
 	go read(c)
 
-	user := Connect{"connect", *username}
+    args := flag.Args()
+    
+    log.Println(args[0])
+	user := Connect{"connect", args[0]}
 	b, err := json.Marshal(user)
 
 	n, err := c.Write(b)

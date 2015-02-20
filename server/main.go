@@ -41,18 +41,20 @@ func broadcast(serv *Server) {
 	// loop on incoming messages from the server's chan
 	for msg := range serv.serverChan {
 		// send message to all clients
-		from := serv.clients[msg.conn].name + "\n"
+		from := serv.clients[msg.conn].name + ": "
 		i := 0
 		for client := range serv.clients {
 			if client == msg.conn {
 				continue
 			}
+			to := serv.clients[client].name
+			log.Println("broadcasting to ", to)
 			client.Write([]byte(from))
 			client.Write([]byte(msg.msg))
 			i++
 		}
 		// add support for errors
-		log.Println("broadcast:", msg.msg, "to", i, "clients.")
+		log.Println("broadcast ", msg.msg, " to ", i, " clients.")
 	}
 }
 
@@ -86,7 +88,7 @@ func newClient(serv *Server, conn net.Conn, name string) (string, error) {
 	w := make(chan string)
 	c := Client{conn, name, w}
 	serv.clients[conn] = c
-	m := name + " " + "entered the chat."
+	m := name + " entered the chat."
 	//serv.serverChan <- msg
 	return m, nil
 }
@@ -121,13 +123,13 @@ func renameClient(serv *Server, conn net.Conn, newN string, oldN string) (string
 // Connection Handling
 func handleConnection(conn net.Conn, serv *Server) {
 	// Send a welcome message and read the name
-	b := []byte("hey welcome to codechat\n")
+	b := []byte("hey welcome to codechat")
 
 	_, err := conn.Write(b)
 	if checkErr(err) {
 		return
 	}
-	log.Println("new connection!")
+	log.Println("new connection from " + conn.RemoteAddr().String())
 	// Ensure the connection is closed before this routine exits
 	defer conn.Close()
 	dec := json.NewDecoder(conn)
