@@ -86,42 +86,6 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
-func (serv *Server) newClient(conn net.Conn, name string) (string, error) {
-	w := make(chan string)
-	c := &Client{serv, conn, name, w}
-	serv.clients[conn] = c
-	m := name + " entered the chat."
-	//serv.serverChan <- msg
-	return m, nil
-}
-
-func (serv *Server) deleteClient(conn net.Conn) (string, error) {
-	name := serv.clients[conn].name
-	delete(serv.clients, conn)
-	m := name + " " + "has left the chat."
-	//serv.serverChan <- msg
-	return m, nil
-}
-
-func (serv *Server) renameClient(conn net.Conn, newN string, oldN string) (string, error) {
-	var m string
-	var e error
-	if serv.clients[conn].name == oldN {
-		// have to delete the current client, and re-add it with the new name
-		// kind of lame, and i'm sure there's a better way.
-		// if we end up using channels to communicate with the connetions,
-		// this will most likely invalidate the channel, so instead we should
-		// mutate the name
-		serv.deleteClient(conn)
-		serv.newClient(conn, newN)
-		m = oldN + " " + "now known as" + " " + newN
-	} else {
-		m = "Failure. Oldname != newname"
-		e = errors.New("renameClient: Failed to rename client. oldname != newname")
-	}
-	return m, e
-}
-
 func (client *Client) doCommands(dec *json.Decoder) Message {
 	var m Message
 	var e error
@@ -184,7 +148,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 		m := user.doCommands(dec)
 		serv.serverChan <- m
 		if m.exitflag {
-			serv.deleteClient(user.conn)
+			delete(serv.clients, conn)
 			break
 		}
 	}
