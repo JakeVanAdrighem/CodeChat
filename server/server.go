@@ -17,7 +17,7 @@ import (
 
 // Server datatype
 type Server struct {
-	clients    map[net.Conn]Client
+	clients    map[net.Conn]*Client
 	numClients int
 	// broadcasting channel
 	serverChan chan Message
@@ -25,6 +25,7 @@ type Server struct {
 
 // Client datatype
 type Client struct {
+	server     *Server
 	conn       net.Conn
 	name       string
 	clientChan chan string
@@ -32,25 +33,25 @@ type Client struct {
 
 // IPC Message datatype
 type Message struct {
-	conn net.Conn
-	msg  string
-	err  error
+	client Client
+	msg    string
+	err    error
 }
 
 func (serv *Server) broadcast() {
 	// loop on incoming messages from the server's chan
 	for msg := range serv.serverChan {
 		// send message to all clients
-		from := serv.clients[msg.conn].name + ": "
+		from := serv.clients[msg.client.conn].name + ": "
 		i := 0
-		for client := range serv.clients {
-			if client == msg.conn {
+		for conn, client := range serv.clients {
+			if client == &msg.client {
 				continue
 			}
-			to := serv.clients[client].name
+			to := serv.clients[conn].name
 			log.Println("broadcasting to ", to)
-			client.Write([]byte(from))
-			client.Write([]byte(msg.msg))
+			conn.Write([]byte(from))
+			conn.Write([]byte(msg.msg))
 			i++
 		}
 		// add support for errors
@@ -59,7 +60,7 @@ func (serv *Server) broadcast() {
 }
 
 // Passed an error, logs the error and returns true or false
-// Should be used on an if statement to ensure proper termination
+// Should be used on an if statement to ensure proper terserverChanmination
 // true  -> error
 // false -> no error
 func checkErr(e error) bool {
@@ -86,7 +87,7 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 
 func (serv *Server) newClient(conn net.Conn, name string) (string, error) {
 	w := make(chan string)
-	c := Client{conn, name, w}
+	c := &Client{serv, conn, name, w}
 	serv.clients[conn] = c
 	m := name + " entered the chat."
 	//serv.serverChan <- msg
@@ -120,69 +121,73 @@ func (serv *Server) renameClient(conn net.Conn, newN string, oldN string) (strin
 	return m, e
 }
 
+func (client *Client) doCommands(dec *json.Decoder) Message {
+	var m Message
+	var e error
+	var msg string
+	m.client = *client
+	var v map[string]interface{}
+	err := dec.Decode(&v)
+	if checkErr(err) {
+		goto send
+	}
+	switch v["cmd"] {
+	case "connect":
+		if name, ok := v["username"]; ok {
+			client.name = name.(string)
+		} else {
+			e = errors.New("connect: no username given.")
+		}
+	case "rename":
+		if newName, ok := v["newname"]; ok {
+			client.name = newName.(string)
+		} else {
+			e = errors.New("rename: no name(s) given.")
+		}
+	// case "exit":
+	// 	msg, e = serv.deleteClient(conn)
+	// 	// expedite the write process so we can kill the connection
+	// 	m.msg = msg
+	// 	m.err = e
+	// 	serv.serverChan <- m
+	// 	conn.Close()
+	// 	return
+	// lots of "msg" this "msg" that. this is a chat message.
+	case "msg":
+		log.Println("got a mesage")
+		if message, ok := v["msg"]; ok {
+			msg = message.(string)
+		} else {
+			e = errors.New("msg: no message given.")
+		}
+	default:
+		e = errors.New("bad JSON given.")
+	}
+send:
+	m.msg = msg
+	m.err = e
+	return m
+}
+
 // Connection Handling
 func handleConnection(conn net.Conn, serv *Server) {
-	// Send a welcome message and read the name
-	b := []byte("hey welcome to codechat")
-
-	_, err := conn.Write(b)
-	if checkErr(err) {
-		return
-	}
-	log.Println("new connection from " + conn.RemoteAddr().String())
-	// Ensure the connection is closed before this routine exits
+	// ensure that the connection is closed before this routine exits
 	defer conn.Close()
+
+	log.Println("new connection from " + conn.RemoteAddr().String())
+
+	// Create the client for this connection
+	userChan := make(chan string)
+	user := &Client{serv, conn, conn.RemoteAddr().String(), userChan}
+	serv.clients[conn] = user
+	serv.numClients++
+
+	// Create the JSON decoder
 	dec := json.NewDecoder(conn)
-	// Now we can handle all of the incoming messages on this client
 	for {
-		var v map[string]interface{}
-		err := dec.Decode(&v)
-		if checkErr(err) {
-			serv.deleteClient(conn)
-			break
-		}
-		var m Message
-		var e error
-		var msg string
-		m.conn = conn
-		switch v["cmd"] {
-		case "connect":
-			if name, ok := v["username"]; ok {
-				msg, e = serv.newClient(conn, name.(string))
-			} else {
-				e = errors.New("connect: no username given.")
-			}
-		case "rename":
-			if oldN, ok1 := v["oldname"]; ok1 {
-				if newN, ok2 := v["newname"]; ok2 {
-					msg, e = serv.renameClient(conn, oldN.(string), newN.(string))
-				}
-			} else {
-				e = errors.New("rename: no name(s) given.")
-			}
-		case "exit":
-			msg, e = serv.deleteClient(conn)
-			// expedite the write process so we can kill the connection
-			m.msg = msg
-			m.err = e
-			serv.serverChan <- m
-			conn.Close()
-			return
-		// lots of "msg" this "msg" that. this is a chat message.
-		case "msg":
-			log.Println("got a mesage")
-			if message, ok := v["msg"]; ok {
-				msg = message.(string)
-			} else {
-				e = errors.New("msg: no message given.")
-			}
-		default:
-			e = errors.New("bad JSON given.")
-		}
-		// write the message
-		m.msg = msg
-		m.err = e
+		m := user.doCommands(dec)
 		serv.serverChan <- m
+		// user.writeMessage(m)
 	}
 }
 
@@ -191,7 +196,7 @@ func main() {
 
 	// Initialize the server
 	serv := new(Server)
-	serv.clients = make(map[net.Conn]Client)
+	serv.clients = make(map[net.Conn]*Client)
 	serv.serverChan = make(chan Message)
 
 	// Start the broadcaster
