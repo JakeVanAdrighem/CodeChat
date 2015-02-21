@@ -35,7 +35,7 @@ Changes the current client's username:
 
 	{
 		"cmd":"rename",
-		"oldname":"<old-username>",
+//		"oldname":"<old-username>",
 		"newname":"<new-username>"
 	}
 
@@ -59,7 +59,7 @@ Disconnects the client from the server:
     {
         "cmd": "requestWriteAccess"
     }
-    
+
 ### 2. yieldWriteAccess()
 
     {
@@ -83,7 +83,8 @@ server as JSON:
 		"success-msg":"<success-message>"
 	}
 
-Success will be true or false depending on success or failure of the previous command, in the case of a failure, an error message is provided
+Success will be true or false depending on success or failure of the
+previous command, in the case of a failure, an error message is provided
 in the "error-msg" field. In commands where information is requested from
 the server, this info is passed back to the server in the "success-msg"
 field.
@@ -115,18 +116,18 @@ When an existing client exits the chat:
 	}
 
 When the text file is updated:
-    
+
     {
         "cmd":"updateFile",
         "file":new-file
     }
-    
+
 When write access is yielded:
 
     {
         "cmd":"writeAccessYielded"
     }
- 
+
 When write access is granted:
 
     {

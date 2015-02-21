@@ -4,7 +4,7 @@
  * Graham Greving
  */
 
-package main
+package CodeChat
 
 import (
 	"encoding/json"
