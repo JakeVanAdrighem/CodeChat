@@ -37,7 +37,7 @@ type Message struct {
 	err  error
 }
 
-func broadcast(serv *Server) {
+func (serv *Server) broadcast() {
 	// loop on incoming messages from the server's chan
 	for msg := range serv.serverChan {
 		// send message to all clients
@@ -70,7 +70,7 @@ func checkErr(e error) bool {
 	return false
 }
 
-func getClients(serv *Server, conn net.Conn) (string, error) {
+func (serv *Server) getClients(conn net.Conn) (string, error) {
 	// Builds an array of names, as well as comma separated string
 	// just in case we'll need it later
 	names := make([]string, serv.numClients)
@@ -84,7 +84,7 @@ func getClients(serv *Server, conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
-func newClient(serv *Server, conn net.Conn, name string) (string, error) {
+func (serv *Server) newClient(conn net.Conn, name string) (string, error) {
 	w := make(chan string)
 	c := Client{conn, name, w}
 	serv.clients[conn] = c
@@ -93,7 +93,7 @@ func newClient(serv *Server, conn net.Conn, name string) (string, error) {
 	return m, nil
 }
 
-func deleteClient(serv *Server, conn net.Conn) (string, error) {
+func (serv *Server) deleteClient(conn net.Conn) (string, error) {
 	name := serv.clients[conn].name
 	delete(serv.clients, conn)
 	m := name + " " + "has left the chat."
@@ -101,7 +101,7 @@ func deleteClient(serv *Server, conn net.Conn) (string, error) {
 	return m, nil
 }
 
-func renameClient(serv *Server, conn net.Conn, newN string, oldN string) (string, error) {
+func (serv *Server) renameClient(conn net.Conn, newN string, oldN string) (string, error) {
 	var m string
 	var e error
 	if serv.clients[conn].name == oldN {
@@ -110,8 +110,8 @@ func renameClient(serv *Server, conn net.Conn, newN string, oldN string) (string
 		// if we end up using channels to communicate with the connetions,
 		// this will most likely invalidate the channel, so instead we should
 		// mutate the name
-		deleteClient(serv, conn)
-		newClient(serv, conn, newN)
+		serv.deleteClient(conn)
+		serv.newClient(conn, newN)
 		m = oldN + " " + "now known as" + " " + newN
 	} else {
 		m = "Failure. Oldname != newname"
@@ -138,7 +138,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 		var v map[string]interface{}
 		err := dec.Decode(&v)
 		if checkErr(err) {
-			deleteClient(serv, conn)
+			serv.deleteClient(conn)
 			break
 		}
 		var m Message
@@ -148,20 +148,20 @@ func handleConnection(conn net.Conn, serv *Server) {
 		switch v["cmd"] {
 		case "connect":
 			if name, ok := v["username"]; ok {
-				msg, e = newClient(serv, conn, name.(string))
+				msg, e = serv.newClient(conn, name.(string))
 			} else {
 				e = errors.New("connect: no username given.")
 			}
 		case "rename":
 			if oldN, ok1 := v["oldname"]; ok1 {
 				if newN, ok2 := v["newname"]; ok2 {
-					msg, e = renameClient(serv, conn, oldN.(string), newN.(string))
+					msg, e = serv.renameClient(conn, oldN.(string), newN.(string))
 				}
 			} else {
 				e = errors.New("rename: no name(s) given.")
 			}
 		case "exit":
-			msg, e = deleteClient(serv, conn)
+			msg, e = serv.deleteClient(conn)
 			// expedite the write process so we can kill the connection
 			m.msg = msg
 			m.err = e
@@ -195,7 +195,7 @@ func main() {
 	serv.serverChan = make(chan Message)
 
 	// Start the broadcaster
-	go broadcast(serv)
+	go serv.broadcast()
 
 	// Set up networking
 	ln, err := net.Listen("tcp", ":8080")
