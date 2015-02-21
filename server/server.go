@@ -33,9 +33,10 @@ type Client struct {
 
 // IPC Message datatype
 type Message struct {
-	client Client
-	msg    string
-	err    error
+	client   Client
+	msg      string
+	err      error
+	exitflag bool
 }
 
 func (serv *Server) broadcast() {
@@ -144,14 +145,9 @@ func (client *Client) doCommands(dec *json.Decoder) Message {
 		} else {
 			e = errors.New("rename: no name(s) given.")
 		}
-	// case "exit":
-	// 	msg, e = serv.deleteClient(conn)
-	// 	// expedite the write process so we can kill the connection
-	// 	m.msg = msg
-	// 	m.err = e
-	// 	serv.serverChan <- m
-	// 	conn.Close()
-	// 	return
+	case "exit":
+		msg = client.name + " " + "has left the chat."
+		m.exitflag = true
 	// lots of "msg" this "msg" that. this is a chat message.
 	case "msg":
 		log.Println("got a mesage")
@@ -187,7 +183,10 @@ func handleConnection(conn net.Conn, serv *Server) {
 	for {
 		m := user.doCommands(dec)
 		serv.serverChan <- m
-		// user.writeMessage(m)
+		if m.exitflag {
+			serv.deleteClient(user.conn)
+			break
+		}
 	}
 }
 
