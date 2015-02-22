@@ -79,8 +79,8 @@ server as JSON:
 
 	{
 		"success":<bool>,
-		"error-msg": "<error>",
-		"success-msg":"<success-message>"
+        "from":"<source-of-msg>",
+        "status-message":"<status-message>"
 	}
 
 Success will be true or false depending on success or failure of the
