@@ -4,7 +4,7 @@
  * Graham Greving
  */
 
-package CodeChat
+package main
 
 import (
 	"encoding/json"
@@ -39,23 +39,49 @@ type Message struct {
 	exitflag bool
 }
 
+type OutgoingMessage struct {
+	Success   bool   `json:"success"`
+	From      string `json:"from"`
+	StatusMsg string `json:"status-message"`
+}
+
+func writeMsg(conn net.Conn, msg OutgoingMessage) {
+	log.Println("writing a message")
+	b, err := json.Marshal(msg)
+	if checkErr(err) {
+		return
+	}
+	n, err := conn.Write(b)
+	if checkErr(err) || n == 0 {
+		return
+	}
+}
+
 func (serv *Server) broadcast() {
 	// loop on incoming messages from the server's chan
 	for msg := range serv.serverChan {
+		outmsg := OutgoingMessage{true, "", ""}
+		if msg.err != nil {
+			outmsg.Success = false
+			outmsg.StatusMsg = msg.err.Error()
+			outmsg.From = "you"
+			writeMsg(msg.client.conn, outmsg)
+		} else {
+			outmsg.Success = true
+			outmsg.StatusMsg = msg.msg
+			outmsg.From = msg.client.name
+		}
 		// send message to all clients
-		from := serv.clients[msg.client.conn].name + ": "
 		i := 0
 		for conn, client := range serv.clients {
 			if client == &msg.client {
 				continue
 			}
+			writeMsg(conn, outmsg)
 			to := serv.clients[conn].name
 			log.Println("broadcasting to ", to)
-			conn.Write([]byte(from))
-			conn.Write([]byte(msg.msg))
 			i++
 		}
-		// add support for errors
 		log.Println("broadcast ", msg.msg, " to ", i, " clients.")
 	}
 }
@@ -149,7 +175,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 		serv.serverChan <- m
 		if m.exitflag {
 			delete(serv.clients, conn)
-			break
+			return
 		}
 	}
 }
