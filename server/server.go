@@ -112,7 +112,7 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
-func (client *Client) doCommands(dec *json.Decoder) Message {
+func (client *Client) doCommands(dec *json.Decoder) (Message, error){
 	var m Message
 	var e error
 	var msg string
@@ -120,7 +120,7 @@ func (client *Client) doCommands(dec *json.Decoder) Message {
 	var v map[string]interface{}
 	err := dec.Decode(&v)
 	if checkErr(err) {
-		goto send
+		return m, err
 	}
 	switch v["cmd"] {
 	case "connect":
@@ -149,10 +149,10 @@ func (client *Client) doCommands(dec *json.Decoder) Message {
 	default:
 		e = errors.New("bad JSON given.")
 	}
-send:
+
 	m.msg = msg
 	m.err = e
-	return m
+	return m, err
 }
 
 // Connection Handling
@@ -171,9 +171,9 @@ func handleConnection(conn net.Conn, serv *Server) {
 	// Create the JSON decoder
 	dec := json.NewDecoder(conn)
 	for {
-		m := user.doCommands(dec)
+		m, err := user.doCommands(dec)
 		serv.serverChan <- m
-		if m.exitflag {
+		if m.exitflag || err != nil {
 			delete(serv.clients, conn)
 			return
 		}

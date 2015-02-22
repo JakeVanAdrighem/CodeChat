@@ -5,7 +5,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	// "fmt"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -30,7 +30,7 @@ func read(conn net.Conn) {
 		err := d.Decode(&v)
 		if err != nil {
 			log.Println("error, bad json")
-			continue
+			return
 		}
 		if s, ok := v["success"]; ok && !s.(bool) {
 			log.Println("read: command failed")
@@ -51,6 +51,13 @@ func read(conn net.Conn) {
 
 func main() {
 	flag.Parse()
+	args := flag.Args()
+    if len(args) < 1 {
+        fmt.Println("need a name")
+        return
+    }
+	log.Println(args[0])
+    
 	c, err := net.Dial("tcp", "127.0.0.1:8080")
 	if err != nil {
 		log.Println(err)
@@ -60,9 +67,6 @@ func main() {
 
 	go read(c)
 
-	args := flag.Args()
-
-	log.Println(args[0])
 	user := Connect{"connect", args[0]}
 	b, err := json.Marshal(user)
 
