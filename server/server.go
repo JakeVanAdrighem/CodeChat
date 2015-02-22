@@ -73,8 +73,8 @@ func (serv *Server) broadcast() {
 		}
 		// send message to all clients
 		i := 0
-		for conn, client := range serv.clients {
-			if client == &msg.client {
+		for conn, _ := range serv.clients {
+			if conn == msg.client.conn {
 				continue
 			}
 			writeMsg(conn, outmsg)
