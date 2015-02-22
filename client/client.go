@@ -37,7 +37,9 @@ func read(conn net.Conn) {
 			log.Println("returned: ", v["status-message"])
 			continue
 		} else {
-			log.Println(v["from"].(string) + ":" + v["status-message"].(string))
+		    from := strings.TrimSpace(v["from"].(string))
+			msg := strings.TrimSpace(v["status-message"].(string))
+			fmt.Println(from + ": " + msg)
 		}
 
 		// n, e := conn.Read(b)
