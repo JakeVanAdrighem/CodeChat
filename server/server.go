@@ -31,7 +31,7 @@ type Client struct {
 	clientChan chan string
 }
 
-// IPC Message datatype (internal)
+// IPC Message datatype
 type Message struct {
 	client   Client
 	msg      string
@@ -39,7 +39,7 @@ type Message struct {
 	exitflag bool
 }
 
-type ReturnMessage struct {
+type OutgoingMessage struct {
 	Success   bool   `json:"success"`
 	From      string `json:"from"`
 	StatusMsg string `json:"status-message"`
@@ -73,8 +73,8 @@ func (serv *Server) broadcast() {
 		}
 		// send message to all clients
 		i := 0
-		for conn, client := range serv.clients {
-			if client == &msg.client {
+		for conn, _ := range serv.clients {
+			if conn == msg.client.conn {
 				continue
 			}
 			writeMsg(conn, outmsg)
@@ -112,7 +112,7 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
-func (client *Client) doCommands(dec *json.Decoder) Message {
+func (client *Client) doCommands(dec *json.Decoder) (Message, error){
 	var m Message
 	var e error
 	var msg string
@@ -120,7 +120,7 @@ func (client *Client) doCommands(dec *json.Decoder) Message {
 	var v map[string]interface{}
 	err := dec.Decode(&v)
 	if checkErr(err) {
-		goto send
+		return m, err
 	}
 	switch v["cmd"] {
 	case "connect":
@@ -149,10 +149,10 @@ func (client *Client) doCommands(dec *json.Decoder) Message {
 	default:
 		e = errors.New("bad JSON given.")
 	}
-send:
+
 	m.msg = msg
 	m.err = e
-	return m
+	return m, err
 }
 
 // Connection Handling
@@ -171,9 +171,9 @@ func handleConnection(conn net.Conn, serv *Server) {
 	// Create the JSON decoder
 	dec := json.NewDecoder(conn)
 	for {
-		m := user.doCommands(dec)
+		m, err := user.doCommands(dec)
 		serv.serverChan <- m
-		if m.exitflag {
+		if m.exitflag || err != nil {
 			delete(serv.clients, conn)
 			return
 		}

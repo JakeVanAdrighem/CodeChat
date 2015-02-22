@@ -1,9 +1,7 @@
 CodeChat Todo List
 
-1. form correct JSON responses
-
-2. more refactoring on server.go
-
+1. write back JSON to clients (server.go)
+2. clean up/refactor server.go
 3. implement text editor commands
 
-4. work on the go client (goncurses)
+4. work on the go client
