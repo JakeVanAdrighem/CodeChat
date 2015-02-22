@@ -12,7 +12,6 @@ import (
 	// "flag" // for command line args
 	"log"
 	"net"
-	//	"strings"
 )
 
 // Server datatype
@@ -20,7 +19,7 @@ type Server struct {
 	clients    map[net.Conn]*Client
 	numClients int
 	// broadcasting channel
-	serverChan chan Message
+	serverChan chan message
 }
 
 // Client datatype
@@ -31,58 +30,73 @@ type Client struct {
 	clientChan chan string
 }
 
-// IPC Message datatype
-type Message struct {
+// internal message passing struct for IPC
+type message struct {
 	client   Client
-	msg      string
+	msg      OutgoingMessage
 	err      error
+	res      ClientResponse
 	exitflag bool
 }
 
-type OutgoingMessage struct {
+// ClientResponse response message to a client
+type ClientResponse struct {
 	Success   bool   `json:"success"`
-	From      string `json:"from"`
 	StatusMsg string `json:"status-message"`
 }
 
-func writeMsg(conn net.Conn, msg OutgoingMessage) {
+// OutgoingMessage server message passed to all clients
+type OutgoingMessage struct {
+	Cmd     string
+	From    string
+	Payload string
+}
+
+func (msg OutgoingMessage) write(conn net.Conn) error {
 	log.Println("writing a message")
 	b, err := json.Marshal(msg)
-	if checkErr(err) {
-		return
+	if err != nil {
+		return err
 	}
 	n, err := conn.Write(b)
-	if checkErr(err) || n == 0 {
-		return
+	if n == 0 {
+		err = errors.New("outgoingmessage.write: no bytes written")
 	}
+	return err
+}
+
+func (res ClientResponse) write(conn net.Conn) error {
+	log.Println("writing a response")
+	b, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+	n, err := conn.Write(b)
+	if n == 0 {
+		err = errors.New("clientresponse.write: no bytes written")
+	}
+	return err
 }
 
 func (serv *Server) broadcast() {
 	// loop on incoming messages from the server's chan
 	for msg := range serv.serverChan {
-		outmsg := OutgoingMessage{true, "", ""}
-		if msg.err != nil {
-			outmsg.Success = false
-			outmsg.StatusMsg = msg.err.Error()
-			outmsg.From = "you"
-			writeMsg(msg.client.conn, outmsg)
-		} else {
-			outmsg.Success = true
-			outmsg.StatusMsg = msg.msg
-			outmsg.From = msg.client.name
-		}
+		log.Println("Got a message")
 		// send message to all clients
 		i := 0
-		for conn, _ := range serv.clients {
+		for conn := range serv.clients {
+			// only write the response to the requesting connection
 			if conn == msg.client.conn {
-				continue
+				msg.res.write(conn)
+			} else {
+				// write the message to all other connections
+				msg.msg.write(conn)
+				to := serv.clients[conn].name
+				log.Println("broadcasting to ", to)
+				i++
 			}
-			writeMsg(conn, outmsg)
-			to := serv.clients[conn].name
-			log.Println("broadcasting to ", to)
-			i++
 		}
-		log.Println("broadcast ", msg.msg, " to ", i, " clients.")
+		log.Println("broadcast ", msg, " to ", i, " clients.")
 	}
 }
 
@@ -112,10 +126,12 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
-func (client *Client) doCommands(dec *json.Decoder) (Message, error){
-	var m Message
+func (client *Client) doCommands(dec *json.Decoder) (message, error) {
+	var m message
 	var e error
 	var msg string
+	var cmd string
+	var from string
 	m.client = *client
 	var v map[string]interface{}
 	err := dec.Decode(&v)
@@ -126,31 +142,39 @@ func (client *Client) doCommands(dec *json.Decoder) (Message, error){
 	case "connect":
 		if name, ok := v["username"]; ok {
 			client.name = name.(string)
+			msg = client.name
+			cmd = "client-connect"
 		} else {
-			e = errors.New("connect: no username given.")
+			e = errors.New("connect: no username given")
 		}
 	case "rename":
 		if newName, ok := v["newname"]; ok {
+			msg = client.name
 			client.name = newName.(string)
+			cmd = "client-rename"
+			msg += "," + client.name
 		} else {
-			e = errors.New("rename: no name(s) given.")
+			e = errors.New("rename: no name(s) given")
 		}
 	case "exit":
-		msg = client.name + " " + "has left the chat."
+		msg = client.name
+		cmd = "client-exit"
 		m.exitflag = true
 	// lots of "msg" this "msg" that. this is a chat message.
 	case "msg":
 		log.Println("got a mesage")
 		if message, ok := v["msg"]; ok {
 			msg = message.(string)
+			cmd = "message"
 		} else {
-			e = errors.New("msg: no message given.")
+			e = errors.New("msg: no message given")
 		}
 	default:
-		e = errors.New("bad JSON given.")
+		e = errors.New("bad JSON given")
 	}
-
-	m.msg = msg
+	m.msg = OutgoingMessage{cmd, from, msg}
+	errorString := ""
+	m.res = ClientResponse{e == nil, errorString}
 	m.err = e
 	return m, err
 }
@@ -175,6 +199,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 		serv.serverChan <- m
 		if m.exitflag || err != nil {
 			delete(serv.clients, conn)
+			serv.numClients--
 			return
 		}
 	}
@@ -186,7 +211,7 @@ func main() {
 	// Initialize the server
 	serv := new(Server)
 	serv.clients = make(map[net.Conn]*Client)
-	serv.serverChan = make(chan Message)
+	serv.serverChan = make(chan message)
 
 	// Start the broadcaster
 	go serv.broadcast()

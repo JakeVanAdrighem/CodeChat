@@ -79,7 +79,7 @@ server as JSON:
 
 	{
 		"success":<bool>,
-        "from":"<source-of-msg>",
+		"cmd":<command>,
         "status-message":"<status-message>"
 	}
 
@@ -104,7 +104,7 @@ When a new message has been sent to the chat:
 When a new client enters the chat:
 
 	{
-		"cmd":"client-enter",
+		"cmd":"client-connect",
 		"user":"<username>"
 	}
 
