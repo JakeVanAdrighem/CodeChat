@@ -42,7 +42,8 @@ func read(conn net.Conn) {
 				log.Println("returned: ", v["status-message"])
 			}
 			continue
-		} else if c, ok := v["cmd"]; ok { // Catch general messages from the server
+			// Catch general messages from the server
+		} else if c, ok := v["cmd"]; ok {
 			switch c {
 			case "message":
 				log.Println("got message")

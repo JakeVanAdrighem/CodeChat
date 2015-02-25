@@ -42,6 +42,7 @@ type message struct {
 // ClientResponse response message to a client
 type ClientResponse struct {
 	Success   bool   `json:"success"`
+	Cmd       string `json:"cmd"`
 	StatusMsg string `json:"status-message"`
 }
 
@@ -146,6 +147,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			cmd = "client-connect"
 		} else {
 			e = errors.New("connect: no username given")
+			cmd = "connect"
 		}
 	case "rename":
 		if newName, ok := v["newname"]; ok {
@@ -155,6 +157,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			msg += "," + client.name
 		} else {
 			e = errors.New("rename: no name(s) given")
+			cmd = "rename"
 		}
 	case "exit":
 		msg = client.name
@@ -168,13 +171,15 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			cmd = "message"
 		} else {
 			e = errors.New("msg: no message given")
+			cmd = "message"
 		}
 	default:
 		e = errors.New("bad JSON given")
 	}
 	m.msg = OutgoingMessage{cmd, from, msg}
+	// need to fix this errorString
 	errorString := ""
-	m.res = ClientResponse{e == nil, errorString}
+	m.res = ClientResponse{e == nil, cmd, errorString}
 	m.err = e
 	return m, err
 }
