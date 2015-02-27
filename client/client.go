@@ -43,18 +43,25 @@ func read(conn net.Conn) {
 			}
 			continue
 			// Catch general messages from the server
-		} else if c, ok := v["cmd"]; ok {
+		}
+        if c, ok := v["cmd"]; ok {
 			switch c {
 			case "message":
 				log.Println("got message")
+                continue
 			case "client-exit":
 				log.Println("client exited")
+                continue
 			case "client-connect":
 				log.Println("client entered")
+                continue
 			default:
 				log.Println("no cmd parsed")
+                continue
 			}
 		}
+        
+        log.Println("read: Something weird happened, logic shouldn't be here")
 
 		// n, e := conn.Read(b)
 		// if e != nil || n == 0 {
@@ -72,7 +79,8 @@ func main() {
 		fmt.Println("need a name")
 		return
 	}
-	log.Println(args[0])
+    name := args[0]
+	log.Println(name)
 
 	c, err := net.Dial("tcp", "127.0.0.1:8080")
 	if err != nil {
@@ -83,7 +91,7 @@ func main() {
 
 	go read(c)
 
-	user := Connect{"connect", args[0]}
+	user := Connect{"connect", name}
 	b, err := json.Marshal(user)
 
 	n, err := c.Write(b)

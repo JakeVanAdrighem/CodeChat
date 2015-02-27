@@ -20,7 +20,7 @@ Adds the client to the chat server with the provided username:
 
 	{
 		"cmd":"connect",
-		"username":"<username"
+		"username":"<username>"
 	}
 
 ### 1. message ("message")

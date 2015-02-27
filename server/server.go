@@ -54,12 +54,14 @@ type OutgoingMessage struct {
 }
 
 func (msg OutgoingMessage) write(conn net.Conn) error {
-	log.Println("writing a message")
+	log.Println("writing a outgoing message to", conn)
 	b, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
+    log.Println("OutgoingMessage: marshalled into JSON")
 	n, err := conn.Write(b)
+    log.Println("OutgoingMessage: written")
 	if n == 0 {
 		err = errors.New("outgoingmessage.write: no bytes written")
 	}
@@ -67,7 +69,7 @@ func (msg OutgoingMessage) write(conn net.Conn) error {
 }
 
 func (res ClientResponse) write(conn net.Conn) error {
-	log.Println("writing a response")
+	log.Println("writing a client response to", conn)
 	b, err := json.Marshal(res)
 	if err != nil {
 		return err
@@ -81,23 +83,24 @@ func (res ClientResponse) write(conn net.Conn) error {
 
 func (serv *Server) broadcast() {
 	// loop on incoming messages from the server's chan
-	for msg := range serv.serverChan {
-		log.Println("Got a message")
+	for toBroadcast := range serv.serverChan {
+		log.Println("Got a message in broadcast")
 		// send message to all clients
 		i := 0
+        // Have to do connections, not clients. Ask Graham
 		for conn := range serv.clients {
 			// only write the response to the requesting connection
-			if conn == msg.client.conn {
-				msg.res.write(conn)
+			if conn == toBroadcast.client.conn {
+				toBroadcast.res.write(conn)
 			} else {
 				// write the message to all other connections
-				msg.msg.write(conn)
-				to := serv.clients[conn].name
+                to := serv.clients[conn].name
 				log.Println("broadcasting to ", to)
+				toBroadcast.msg.write(conn)
 				i++
 			}
 		}
-		log.Println("broadcast ", msg, " to ", i, " clients.")
+		log.Println("broadcast ", toBroadcast, " to ", i, " clients.")
 	}
 }
 
@@ -139,6 +142,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 	if checkErr(err) {
 		return m, err
 	}
+    from = client.name
 	switch v["cmd"] {
 	case "connect":
 		if name, ok := v["username"]; ok {
@@ -146,7 +150,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			msg = client.name
 			cmd = "client-connect"
 		} else {
-			e = errors.New("connect: no username given")
+			e = errors.New("connect: no username given\n in doCommands")
 			cmd = "connect"
 		}
 	case "rename":
@@ -156,7 +160,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			cmd = "client-rename"
 			msg += "," + client.name
 		} else {
-			e = errors.New("rename: no name(s) given")
+			e = errors.New("rename: no name(s) given\n in doCommands")
 			cmd = "rename"
 		}
 	case "exit":
@@ -165,16 +169,16 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 		m.exitflag = true
 	// lots of "msg" this "msg" that. this is a chat message.
 	case "msg":
-		log.Println("got a mesage")
+		log.Println("doCommands: got a mesage")
 		if message, ok := v["msg"]; ok {
-			msg = message.(string)
+			msg = from + ": " + message.(string)
 			cmd = "message"
 		} else {
-			e = errors.New("msg: no message given")
+			e = errors.New("msg: no message given\n doCommands")
 			cmd = "message"
 		}
 	default:
-		e = errors.New("bad JSON given")
+		e = errors.New("bad JSON given\n in doCommands")
 	}
 	m.msg = OutgoingMessage{cmd, from, msg}
 	// need to fix this errorString
