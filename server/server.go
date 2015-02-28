@@ -48,9 +48,9 @@ type ClientResponse struct {
 
 // OutgoingMessage server message passed to all clients
 type OutgoingMessage struct {
-	Cmd     string
-	From    string
-	Payload string
+	Cmd     string `json:"cmd"`
+	From    string `json:"from"`
+	Payload string `json:"payload"`
 }
 
 func (msg OutgoingMessage) write(conn net.Conn) error {
@@ -59,9 +59,9 @@ func (msg OutgoingMessage) write(conn net.Conn) error {
 	if err != nil {
 		return err
 	}
-    log.Println("OutgoingMessage: marshalled into JSON")
+	log.Println("OutgoingMessage: marshalled into JSON")
 	n, err := conn.Write(b)
-    log.Println("OutgoingMessage: written")
+	log.Println("OutgoingMessage: written")
 	if n == 0 {
 		err = errors.New("outgoingmessage.write: no bytes written")
 	}
@@ -87,14 +87,14 @@ func (serv *Server) broadcast() {
 		log.Println("Got a message in broadcast")
 		// send message to all clients
 		i := 0
-        // Have to do connections, not clients. Ask Graham
+		// Have to do connections, not clients. Ask Graham
 		for conn := range serv.clients {
 			// only write the response to the requesting connection
 			if conn == toBroadcast.client.conn {
 				toBroadcast.res.write(conn)
 			} else {
 				// write the message to all other connections
-                to := serv.clients[conn].name
+				to := serv.clients[conn].name
 				log.Println("broadcasting to ", to)
 				toBroadcast.msg.write(conn)
 				i++
@@ -142,7 +142,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 	if checkErr(err) {
 		return m, err
 	}
-    from = client.name
+	from = client.name
 	switch v["cmd"] {
 	case "connect":
 		if name, ok := v["username"]; ok {

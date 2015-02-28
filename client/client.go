@@ -36,32 +36,25 @@ func read(conn net.Conn) {
 		if s, ok := v["success"]; ok {
 			if s.(bool) {
 				log.Println("success")
-				continue
 			} else {
 				log.Println("read: command failed")
 				log.Println("returned: ", v["status-message"])
 			}
-			continue
 			// Catch general messages from the server
-		}
-        if c, ok := v["cmd"]; ok {
+		} else if c, ok := v["cmd"]; ok {
 			switch c {
 			case "message":
 				log.Println("got message")
-                continue
 			case "client-exit":
 				log.Println("client exited")
-                continue
 			case "client-connect":
 				log.Println("client entered")
-                continue
 			default:
 				log.Println("no cmd parsed")
-                continue
 			}
+		} else {
+			log.Println("json parsing failed")
 		}
-        
-        log.Println("read: Something weird happened, logic shouldn't be here")
 
 		// n, e := conn.Read(b)
 		// if e != nil || n == 0 {
@@ -79,7 +72,7 @@ func main() {
 		fmt.Println("need a name")
 		return
 	}
-    name := args[0]
+	name := args[0]
 	log.Println(name)
 
 	c, err := net.Dial("tcp", "127.0.0.1:8080")
