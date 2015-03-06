@@ -39,7 +39,7 @@ func main() {
 	*/
 
 	// layout frames
-	mainFrame := gtk.NewFrame("main")
+	mainFrame := gtk.NewFrame("")
 	mainBox := gtk.NewHBox(true, 1)
 
 	leftFrame := gtk.NewFrame("editor")
@@ -56,7 +56,7 @@ func main() {
 	rightPane := gtk.NewVPaned()
 	// rightBox := gtk.NewVBox(false, 1)
 
-	chatFrame := gtk.NewFrame("messages")
+	chatFrame := gtk.NewFrame("chat")
 	//chatBox := gtk.NewVBox(true, 1)
 	chatBox := gtk.NewScrolledWindow(nil, nil)
 	chatBox.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -67,13 +67,16 @@ func main() {
 	chatBox.Add(chatMessages)
 	chatFrame.Add(chatBox)
 
-	inputFrame := gtk.NewFrame("input")
+	inputFrame := gtk.NewFrame("")
 	inputBox := gtk.NewHBox(false, 1)
 	inputEntry := gtk.NewEntry()
 	inputButton := gtk.NewButtonWithLabel("send")
 	inputBox.Add(inputEntry)
 	inputBox.Add(inputButton)
+	// inputBox.SetSizeRequest(15, 15)
 	inputFrame.Add(inputBox)
+
+	//	inputButton.SetSizeRequest(25, 50)
 
 	// rightBox.Add(chatFrame)
 	// rightBox.Add(inputFrame)
@@ -86,6 +89,11 @@ func main() {
 	mainBox.Add(leftFrame)
 	mainBox.Add(rightPane)
 	mainFrame.Add(mainBox)
+
+	inputEntry.SetSizeRequest(450, -1)
+	//	inputButton.SetSizeRequest(60, 50)
+	chatFrame.SetSizeRequest(500, 550)
+	inputFrame.SetSizeRequest(500, 50)
 
 	window.Add(mainFrame)
 	window.SetSizeRequest(1000, 600)
