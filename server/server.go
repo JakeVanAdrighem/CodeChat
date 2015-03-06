@@ -54,29 +54,29 @@ type OutgoingMessage struct {
 }
 
 func (msg OutgoingMessage) write(conn net.Conn) error {
-	log.Println("writing a outgoing message to", conn)
+	log.Println("writing a outgoing message to", conn.RemoteAddr().String())
 	b, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
 	log.Println("OutgoingMessage: marshalled into JSON")
 	n, err := conn.Write(b)
-	log.Println("OutgoingMessage: written")
 	if n == 0 {
-		err = errors.New("outgoingmessage.write: no bytes written")
+		err = errors.New("OutgoingMessage.write: no bytes written")
 	}
+	log.Println("OutgoingMessage: written")
 	return err
 }
 
 func (res ClientResponse) write(conn net.Conn) error {
-	log.Println("writing a client response to", conn)
+	log.Println("writing a client response to", conn.RemoteAddr().String())
 	b, err := json.Marshal(res)
 	if err != nil {
 		return err
 	}
 	n, err := conn.Write(b)
 	if n == 0 {
-		err = errors.New("clientresponse.write: no bytes written")
+		err = errors.New("ClientResponse.write: no bytes written")
 	}
 	return err
 }
@@ -100,7 +100,7 @@ func (serv *Server) broadcast() {
 				i++
 			}
 		}
-		log.Println("broadcast ", toBroadcast, " to ", i, " clients.")
+		log.Println("broadcast to ", i, " clients.")
 	}
 }
 
@@ -150,7 +150,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			msg = client.name
 			cmd = "client-connect"
 		} else {
-			e = errors.New("connect: no username given\n in doCommands")
+			e = errors.New("doCommands: no username passed to connect")
 			cmd = "connect"
 		}
 	case "rename":
@@ -160,7 +160,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			cmd = "client-rename"
 			msg += "," + client.name
 		} else {
-			e = errors.New("rename: no name(s) given\n in doCommands")
+			e = errors.New("doCommands: no name(s) passed to rename")
 			cmd = "rename"
 		}
 	case "exit":
@@ -174,7 +174,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			msg = from + ": " + message.(string)
 			cmd = "message"
 		} else {
-			e = errors.New("msg: no message given\n doCommands")
+			e = errors.New("doCommands: no message passed to msg")
 			cmd = "message"
 		}
 	default:
@@ -207,6 +207,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 		m, err := user.doCommands(dec)
 		serv.serverChan <- m
 		if m.exitflag || err != nil {
+			// write back to clients
 			delete(serv.clients, conn)
 			serv.numClients--
 			return

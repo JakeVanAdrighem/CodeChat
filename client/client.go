@@ -3,6 +3,7 @@
 package main
 
 import (
+	gc "code.google.com/p/goncurses"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -30,6 +31,7 @@ func read(conn net.Conn) {
 		err := d.Decode(&v)
 		if err != nil {
 			log.Println("error, bad json")
+			// should exit here : signifies a dead server
 			return
 		}
 		// Catch a response from the server
@@ -50,18 +52,11 @@ func read(conn net.Conn) {
 			case "client-connect":
 				log.Println("client entered")
 			default:
-				log.Println("no cmd parsed")
+				log.Println("no cmd parsed. got: ", v)
 			}
 		} else {
-			log.Println("json parsing failed")
+			log.Println("json parsing failed, got: ", v)
 		}
-
-		// n, e := conn.Read(b)
-		// if e != nil || n == 0 {
-		// 	log.Println("error.")
-		// 	return
-		// }
-		// fmt.Println(string(b))
 	}
 }
 
@@ -92,6 +87,7 @@ func main() {
 		log.Println(err)
 		return
 	}
+
 	// keep the connection alive
 	for {
 		read := make([]byte, 4096)
