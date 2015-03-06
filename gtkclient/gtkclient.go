@@ -24,6 +24,20 @@ func main() {
 		gtk.MainQuit()
 	}, "CodeChat")
 
+	/*
+								main
+		   +----------------------------------------+
+		   |		left		|		right		|
+		   |					|					|
+		   |					|					|
+		   |					|					|
+		   |					|					|
+		   |					+-------------------+
+		   |					|				|btn|
+		   +--------------------+-------------------+
+
+	*/
+
 	// layout frames
 	mainFrame := gtk.NewFrame("main")
 	mainBox := gtk.NewHBox(true, 1)
