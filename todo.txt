@@ -7,3 +7,19 @@ CodeChat Todo List
 
 5. [] work on the go client
 6. [] have client parse JSON
+
+
+GTKClient:
+
+[] Editor
+
+[] Chat Window
+    [] recieve messages and display them
+
+[] Message Input
+    [] send message on button click/enter
+
+[] context switching
+
+[] dialog to select login options
+
