@@ -43,14 +43,27 @@ func main() {
 	mainBox := gtk.NewHBox(true, 1)
 
 	leftFrame := gtk.NewFrame("editor")
-	leftBox := gtk.NewVBox(true, 1)
+	//leftBox := gtk.NewVBox(true, 1)
+	leftBox := gtk.NewScrolledWindow(nil, nil)
+	leftBox.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+	leftBox.SetShadowType(gtk.SHADOW_IN)
+	editor := gtk.NewTextView()
+	leftBox.Add(editor)
+
 	leftFrame.Add(leftBox)
 
 	rightFrame := gtk.NewFrame("chat")
 	rightBox := gtk.NewVBox(false, 1)
 
 	chatFrame := gtk.NewFrame("messages")
-	chatBox := gtk.NewVBox(true, 1)
+	//chatBox := gtk.NewVBox(true, 1)
+	chatBox := gtk.NewScrolledWindow(nil, nil)
+	chatBox.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+	chatBox.SetShadowType(gtk.SHADOW_IN)
+	chatMessages := gtk.NewTextView()
+	chatMessages.SetEditable(false)
+	chatMessages.SetCursorVisible(false)
+	chatBox.Add(chatMessages)
 	chatFrame.Add(chatBox)
 
 	inputFrame := gtk.NewFrame("input")
