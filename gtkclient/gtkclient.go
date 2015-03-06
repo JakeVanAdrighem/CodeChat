@@ -19,9 +19,9 @@ type Layout struct {
 	rightFrame gtk.IWidget
 
 	// objects
-	editor      gtk.IWidget
-	inputEntry  gtk.IWidget
-	inputButton gtk.IWidget
+	editor      *gtk.TextView
+	inputEntry  *gtk.Entry
+	inputButton *gtk.Button
 }
 
 /*
@@ -111,6 +111,12 @@ func main() {
 	}, "CodeChat")
 
 	layout := layoutInit()
+
+	// try adding an event handler onto the inputButton
+
+	layout.inputButton.Clicked(func() {
+		println("button clicked")
+	})
 
 	window.Add(layout.mainFrame)
 	window.SetSizeRequest(1000, 600)
