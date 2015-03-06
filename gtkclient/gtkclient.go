@@ -4,6 +4,7 @@ import (
 	//	"github.com/mattn/go-gtk/gdkpixbuf"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
+//    "github.com/mattn/go-gtk/gdk"
 	// "os"
 	// "os/exec"
 	// "path"
@@ -113,10 +114,17 @@ func main() {
 	layout := layoutInit()
 
 	// try adding an event handler onto the inputButton
+    // try to attach a 'Return' key handler as well
 
 	layout.inputButton.Clicked(func() {
-		println("button clicked")
+        // send mesage here
+		println("send message: ", layout.inputEntry.GetText() )
+        layout.inputEntry.SetText("")
 	})
+
+    layout.inputEntry.Connect("activate", func() {
+        println("enter pressed") 
+    })
 
 	window.Add(layout.mainFrame)
 	window.SetSizeRequest(1000, 600)
