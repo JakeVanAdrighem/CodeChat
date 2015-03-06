@@ -52,8 +52,9 @@ func main() {
 
 	leftFrame.Add(leftBox)
 
-	rightFrame := gtk.NewFrame("chat")
-	rightBox := gtk.NewVBox(false, 1)
+	// rightFrame := gtk.NewFrame("chat")
+	rightPane := gtk.NewVPaned()
+	// rightBox := gtk.NewVBox(false, 1)
 
 	chatFrame := gtk.NewFrame("messages")
 	//chatBox := gtk.NewVBox(true, 1)
@@ -74,13 +75,16 @@ func main() {
 	inputBox.Add(inputButton)
 	inputFrame.Add(inputBox)
 
-	rightBox.Add(chatFrame)
-	rightBox.Add(inputFrame)
+	// rightBox.Add(chatFrame)
+	// rightBox.Add(inputFrame)
+	//
+	// rightFrame.Add(rightBox)
 
-	rightFrame.Add(rightBox)
+	rightPane.Pack1(chatFrame, false, false)
+	rightPane.Pack2(inputFrame, false, false)
 
 	mainBox.Add(leftFrame)
-	mainBox.Add(rightFrame)
+	mainBox.Add(rightPane)
 	mainFrame.Add(mainBox)
 
 	window.Add(mainFrame)
