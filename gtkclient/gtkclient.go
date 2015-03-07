@@ -23,6 +23,7 @@ type Layout struct {
 	editor      *gtk.TextView
 	inputEntry  *gtk.Entry
 	inputButton *gtk.Button
+    chatMessages *gtk.TextView
 }
 
 /*
@@ -96,8 +97,10 @@ func layoutInit() Layout {
 	chatFrame.SetSizeRequest(500, 550)
 	inputFrame.SetSizeRequest(500, 50)
 
-	return Layout{mainFrame, leftFrame, rightPane, editor, inputEntry, inputButton}
+	return Layout{mainFrame, leftFrame, rightPane, editor, inputEntry, inputButton, chatMessages}
 }
+
+
 
 func main() {
 	//var menuitem *gtk.MenuItem
@@ -123,7 +126,12 @@ func main() {
 	})
 
     layout.inputEntry.Connect("activate", func() {
-        println("enter pressed") 
+        println("enter pressed: ", layout.inputEntry.GetText())
+        var end gtk.TextIter
+        buffer := layout.chatMessages.GetBuffer()
+        buffer.GetEndIter(&end)
+        buffer.Insert(&end, layout.inputEntry.GetText() + "\n")
+        layout.inputEntry.SetText("")
     })
 
 	window.Add(layout.mainFrame)
