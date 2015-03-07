@@ -3,7 +3,7 @@
 package main
 
 import (
-	gc "code.google.com/p/goncurses"
+	// gc "code.google.com/p/goncurses"
 	"encoding/json"
 	"flag"
 	"fmt"
