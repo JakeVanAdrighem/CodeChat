@@ -100,8 +100,6 @@ func layoutInit() Layout {
 	return Layout{mainFrame, leftFrame, rightPane, editor, inputEntry, inputButton, chatMessages}
 }
 
-
-
 func main() {
 	//var menuitem *gtk.MenuItem
 	gtk.Init(nil)
@@ -134,6 +132,15 @@ func main() {
         layout.inputEntry.SetText("")
     })
 
+    messagedialog := gtk.NewMessageDialog(
+        window,
+        gtk.DIALOG_MODAL,
+        gtk.MESSAGE_INFO,
+        gtk.BUTTONS_OK,
+        "hello")
+    messagedialog.Run()
+    messagedialog.Destroy()
+        
 	window.Add(layout.mainFrame)
 	window.SetSizeRequest(1000, 600)
 	window.ShowAll()
