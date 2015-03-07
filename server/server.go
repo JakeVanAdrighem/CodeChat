@@ -12,6 +12,7 @@ import (
 	// "flag" // for command line args
 	"log"
 	"net"
+	"sync"
 )
 
 // Server datatype
@@ -20,6 +21,7 @@ type Server struct {
 	numClients int
 	// broadcasting channel
 	serverChan chan message
+	write      sync.Mutex
 }
 
 // Client datatype
@@ -176,6 +178,17 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 		} else {
 			e = errors.New("doCommands: no message passed to msg")
 			cmd = "message"
+		}
+	// case "request-write-access":
+	// 	client.server.write.Lock()
+	// 	cmd = "write-access-granted"
+	// case "yield-write-access":
+	// 	client.server.write.Unlock()
+	// 	cmd = "write-access-yielded"
+	case "update-file":
+		if file, ok := v["msg"]; ok {
+			cmd = "update-file"
+			msg = file.(string)
 		}
 	default:
 		e = errors.New("bad JSON given\n in doCommands")

@@ -21,6 +21,7 @@ type Layout struct {
 
 	// objects
 	editor       *gtksourceview.SourceView
+	editorbuf    *gtksourceview.SourceBuffer
 	inputEntry   *gtk.Entry
 	inputButton  *gtk.Button
 	chatMessages *gtk.TextView
@@ -78,7 +79,7 @@ func layoutInit() Layout {
 	chatFrame.SetSizeRequest(500, 550)
 	inputFrame.SetSizeRequest(500, 50)
 
-	return Layout{mainFrame, leftFrame, rightPane, editor, inputEntry, inputButton, chatMessages}
+	return Layout{mainFrame, leftFrame, rightPane, editor, editorbuf, inputEntry, inputButton, chatMessages}
 }
 
 type Message struct {
@@ -119,11 +120,18 @@ func read(conn net.Conn, lyt *Layout) {
 				buffer := lyt.chatMessages.GetBuffer()
 				buffer.GetEndIter(&end)
 				buffer.Insert(&end, v["payload"].(string)+"\n")
-				lyt.inputEntry.SetText("")
 			case "client-exit":
 				log.Println("client exited")
 			case "client-connect":
 				log.Println("client entered")
+			case "update-file":
+				log.Println("file updated")
+				var start, end gtk.TextIter
+				buffer := lyt.editor.GetBuffer()
+				buffer.GetStartIter(&start)
+				buffer.GetEndIter(&end)
+				buffer.Delete(&start, &end)
+				buffer.Insert(&start, v["payload"].(string))
 			default:
 				log.Println("no cmd parsed. got: ", v)
 			}
@@ -182,6 +190,20 @@ func main() {
 		layout.inputEntry.SetText("")
 		m := Message{"msg", msg}
 		//fmt.Println(m)
+		b, e := json.Marshal(m)
+		if e != nil {
+			log.Println("somethin happened from enter...")
+		}
+		c.Write(b)
+	})
+
+	layout.editorbuf.Connect("changed", func() {
+		println("editor changed")
+		var start, end gtk.TextIter
+		layout.editorbuf.GetStartIter(&start)
+		layout.editorbuf.GetEndIter(&end)
+		msg := layout.editorbuf.GetText(&start, &end, false)
+		m := Message{"update-file", msg}
 		b, e := json.Marshal(m)
 		if e != nil {
 			log.Println("somethin happened from enter...")

@@ -57,19 +57,19 @@ Disconnects the client from the server:
 ### 1. requestWriteAccess()
 
     {
-        "cmd": "requestWriteAccess"
+        "cmd": "request-write-ccess"
     }
 
 ### 2. yieldWriteAccess()
 
     {
-        "cmd":"yieldWriteAccess"
+        "cmd":"yield-write-access"
     }
 
 ### 3. updateFile(file)
 
     {
-        "cmd":"updateFile",
+        "cmd":"update-file",
         "file":file
     }
 
@@ -118,20 +118,20 @@ When an existing client exits the chat:
 When the text file is updated:
 
     {
-        "cmd":"updateFile",
+        "cmd":"update-file",
         "file":new-file
     }
 
 When write access is yielded:
 
     {
-        "cmd":"writeAccessYielded"
+        "cmd":"write-access-yielded"
     }
 
 When write access is granted:
 
     {
-        "cmd":"writeAccessGranted"
+        "cmd":"write-access-granted"
     }
 
 Note that clients are responsible for keeping a list of current clients
