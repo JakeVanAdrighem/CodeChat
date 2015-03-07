@@ -132,12 +132,15 @@ func main() {
         layout.inputEntry.SetText("")
     })
 
-    messagedialog := gtk.NewMessageDialog(
-        window,
-        gtk.DIALOG_MODAL,
-        gtk.MESSAGE_INFO,
-        gtk.BUTTONS_OK,
-        "hello")
+    messagedialog := gtk.NewDialog()
+    connectBox := messagedialog.GetVBox()
+    label := gtk.NewLabel("username")
+    username := gtk.NewEntry()
+    connectBox.Add(label)
+    connectBox.Add(username)
+    messagedialog.AddButton("connect", gtk.RESPONSE_OK)
+    label.Show()
+    username.Show()
     messagedialog.Run()
     messagedialog.Destroy()
         
