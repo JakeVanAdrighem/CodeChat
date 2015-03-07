@@ -157,8 +157,19 @@ func main() {
 
 	layout.inputButton.Clicked(func() {
 		// send mesage here
-		println("send message: ", layout.inputEntry.GetText())
+		msg := layout.inputEntry.GetText()
+		println("button clicked: ", msg)
+		var end gtk.TextIter
+		buffer := layout.chatMessages.GetBuffer()
+		buffer.GetEndIter(&end)
+		buffer.Insert(&end, "you: "+msg+"\n")
 		layout.inputEntry.SetText("")
+		m := Message{"msg", msg}
+		b, e := json.Marshal(m)
+		if e != nil {
+			log.Println("somethin happened from click...")
+		}
+		c.Write(b)
 	})
 
 	layout.inputEntry.Connect("activate", func() {
@@ -173,7 +184,7 @@ func main() {
 		//fmt.Println(m)
 		b, e := json.Marshal(m)
 		if e != nil {
-			log.Println("somethin happened...")
+			log.Println("somethin happened from enter...")
 		}
 		c.Write(b)
 	})
