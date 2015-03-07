@@ -1,12 +1,12 @@
 package main
 
 import (
-	//	"github.com/mattn/go-gtk/gdkpixbuf"
 	"encoding/json"
 	//"flag"
 	//"fmt"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
+	"github.com/mattn/go-gtk/gtksourceview"
 	"log"
 	"net"
 	//"os"
@@ -20,7 +20,7 @@ type Layout struct {
 	rightFrame gtk.IWidget
 
 	// objects
-	editor       *gtk.TextView
+	editor       *gtksourceview.SourceView
 	inputEntry   *gtk.Entry
 	inputButton  *gtk.Button
 	chatMessages *gtk.TextView
@@ -47,7 +47,9 @@ func layoutInit() Layout {
 	leftBox := gtk.NewScrolledWindow(nil, nil)
 	leftBox.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	leftBox.SetShadowType(gtk.SHADOW_IN)
-	editor := gtk.NewTextView()
+	// need to figure out this sourceview thing
+	editorbuf := gtksourceview.NewSourceBuffer()
+	editor := gtksourceview.NewSourceViewWithBuffer(editorbuf)
 	leftBox.Add(editor)
 	leftFrame.Add(leftBox)
 	rightPane := gtk.NewVPaned()

@@ -1,3 +1,6 @@
 Talk:
 http://synflood.at/tmp/golang-slides/mrmcd2012.html#22
 
+GTK Source View
+-- a project extending gtk to include programming source objects
+https://wiki.gnome.org/Projects/GtkSourceView/
