@@ -9,6 +9,7 @@ import (
 	"github.com/mattn/go-gtk/gtksourceview"
 	"log"
 	"net"
+	// "sync"
 	//"os"
 	//"strings"
 )
@@ -29,15 +30,15 @@ type Layout struct {
 
 /*
 							main
-	+----------------------------------------+
-	|		left		|		right		|
+	+---------------------------------------+
+	|		left	  	|		right		|
 	|					|					|
 	|					|					|
 	|					|					|
 	|					|					|
 	|					+-------------------+
 	|					|				|btn|
-	+--------------------+-------------------+
+	+-------------------+-------------------+
 
 */
 func layoutInit() Layout {
@@ -126,12 +127,13 @@ func read(conn net.Conn, lyt *Layout) {
 				log.Println("client entered")
 			case "update-file":
 				log.Println("file updated")
+				log.Println("file:", v["payload"].(string))
 				var start, end gtk.TextIter
-				buffer := lyt.editor.GetBuffer()
-				buffer.GetStartIter(&start)
-				buffer.GetEndIter(&end)
-				buffer.Delete(&start, &end)
-				buffer.Insert(&start, v["payload"].(string))
+				lyt.editorbuf.GetStartIter(&start)
+				lyt.editorbuf.GetEndIter(&end)
+				lyt.editorbuf.Delete(&start, &end)
+				lyt.editorbuf.GetStartIter(&start)
+				lyt.editorbuf.Insert(&start, v["payload"].(string))
 			default:
 				log.Println("no cmd parsed. got: ", v)
 			}
@@ -203,6 +205,7 @@ func main() {
 		layout.editorbuf.GetStartIter(&start)
 		layout.editorbuf.GetEndIter(&end)
 		msg := layout.editorbuf.GetText(&start, &end, false)
+		log.Println("send file: ", msg)
 		m := Message{"update-file", msg}
 		b, e := json.Marshal(m)
 		if e != nil {
