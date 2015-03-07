@@ -11,19 +11,20 @@ CodeChat Todo List
 
 GTKClient:
 
+[] code cleanup
+
 [] Editor
     [] activate 'onchange' handler
 
-[] Chat Window
-    [] display text
-    [] recieve messages and display them
+[x] Chat Window
+    [x] display text
+    [x] recieve messages and display them
 
-[] Message Input
+[x] Message Input
     [x] activate enter handler
     [x] activate button handler
-    [] send message on button click/enter
+    [x] send message on button click/enter
 
 [] context switching
 
-[] dialog to select login options
-
+[x] dialog to select login options
