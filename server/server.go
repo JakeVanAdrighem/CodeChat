@@ -165,7 +165,11 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			cmd = "rename"
 		}
 	case "exit":
-		msg = client.name
+		if reason, ok := v["msg"]; ok {
+			msg = reason.(string)
+		} else {
+			msg = "reason unknown"
+		}
 		cmd = "client-exit"
 		m.exitflag = true
 	// lots of "msg" this "msg" that. this is a chat message.
