@@ -136,6 +136,14 @@ func (c *Client) Write(command string, payload string) error {
 	return err
 }
 
+// Close : Write an exit command and close off the connection
+// Should be called with a defer to ensure it happens.
+// defer client.Close("reason")
+func (c *Client) Close(reason string) {
+	c.Write("exit", reason)
+	c.Conn.Close()
+}
+
 // Connect : Connects a user to the server, does all the necessary
 // networking and connecting with the given username. Also initializes
 // the JSON decoder and the writeaccess flag.
