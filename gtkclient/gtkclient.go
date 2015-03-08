@@ -128,12 +128,10 @@ func read(conn net.Conn, lyt *Layout) {
 			case "update-file":
 				log.Println("file updated")
 				log.Println("file:", v["payload"].(string))
-				var start, end gtk.TextIter
-				lyt.editorbuf.GetStartIter(&start)
+				var end gtk.TextIter
+				// lyt.editorbuf.GetStartIter(&start)
 				lyt.editorbuf.GetEndIter(&end)
-				lyt.editorbuf.Delete(&start, &end)
-				lyt.editorbuf.GetStartIter(&start)
-				lyt.editorbuf.Insert(&start, v["payload"].(string))
+				lyt.editorbuf.Insert(&end, v["payload"].(string))
 			default:
 				log.Println("no cmd parsed. got: ", v)
 			}
@@ -198,13 +196,13 @@ func main() {
 		}
 		c.Write(b)
 	})
-
-	layout.editorbuf.Connect("changed", func() {
+	buffer := layout.editor.GetBuffer()
+	buffer.Connect("changed", func() {
 		println("editor changed")
 		var start, end gtk.TextIter
-		layout.editorbuf.GetStartIter(&start)
-		layout.editorbuf.GetEndIter(&end)
-		msg := layout.editorbuf.GetText(&start, &end, false)
+		buffer.GetStartIter(&start)
+		buffer.GetEndIter(&end)
+		msg := buffer.GetText(&start, &end, false)
 		log.Println("send file: ", msg)
 		m := Message{"update-file", msg}
 		b, e := json.Marshal(m)
