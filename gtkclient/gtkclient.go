@@ -87,6 +87,8 @@ type Connect struct {
 }
 
 func doRead(client *codechat.Client, lyt *Layout) {
+	buffer := lyt.chatMessages.GetBuffer()
+	var end gtk.TextIter
 	for {
 		read, err := client.Read()
 		if err != nil {
@@ -99,10 +101,14 @@ func doRead(client *codechat.Client, lyt *Layout) {
 		case "success":
 			log.Println("success")
 		case "message":
-			var end gtk.TextIter
-			buffer := lyt.chatMessages.GetBuffer()
 			buffer.GetEndIter(&end)
-			buffer.Insert(&end, read.Payload +"\n")
+			buffer.Insert(&end, read.From + ": " + read.Payload +"\n")
+		case "client-exit":
+			buffer.GetEndIter(&end)
+			buffer.Insert(&end, read.From + " has quit (" + read.Payload + ")\n")
+		case "client-connect":
+			buffer.GetEndIter(&end)
+			buffer.Insert(&end, read.From + " has entered.\n")
 		default:
 			log.Println(read.From, read.Cmd, read.Payload)
 		}
@@ -194,7 +200,7 @@ func main() {
 		buffer.Insert(&end, "Successfully connected as " + client.Username + "\n")
 	}
 
-	defer client.Conn.Close()
+	defer client.Close("F THIS")
 
 	go doRead(client, &layout)
 
