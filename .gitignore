@@ -13,3 +13,4 @@ cabal.config
 client/client
 server/server
 gtkclient/gtkclient
+clientTest/clientTest
