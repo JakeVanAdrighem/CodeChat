@@ -1,8 +1,6 @@
-/* CodeChat: Collaborative Programming
- * Authors:
- * David Taylor
- * Graham Greving
- */
+// server.go
+// Authors: Graham Greving, David Taylor, Jake VanAdrighem
+// CMPS 112: Final Project - CodeChat
 
 package main
 

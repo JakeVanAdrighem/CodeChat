@@ -1,3 +1,11 @@
+// clientTest.go
+// Authors: Graham Greving, David Taylor, Jake VanAdrighem
+// CMPS 112: Final Project - CodeChat
+
+//This file serves as a demonstration on how to use the CodeChat client
+//package. The available commands are Connect, Read and Write.
+
+
 package main
 
 import (
@@ -9,10 +17,8 @@ import (
 )
 
 func runReader(client *codechat.Client) {
-	var read codechat.ReadMessage 
 	for {
-		var err error
-		read, err = client.Read()
+		read, err := client.Read()
 		if err != nil {
 			log.Println(err)
 			if err.Error() == "EOF" {
@@ -51,5 +57,4 @@ func main() {
 		client.Write("msg", readStr)
 		//fmt.Println(b)
 	}
-	
 }
