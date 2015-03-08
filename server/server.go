@@ -150,6 +150,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 		if name, ok := v["username"]; ok {
 			client.name = name.(string)
 			msg = client.name
+			from = client.name
 			cmd = "client-connect"
 		} else {
 			e = errors.New("doCommands: no username passed to connect")
@@ -173,7 +174,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 	case "msg":
 		log.Println("doCommands: got a mesage")
 		if message, ok := v["msg"]; ok {
-			msg = from + ": " + message.(string)
+			msg = message.(string)
 			cmd = "message"
 		} else {
 			e = errors.New("doCommands: no message passed to msg")
@@ -191,7 +192,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 			msg = file.(string)
 		}
 	default:
-		e = errors.New("bad JSON given\n in doCommands")
+		e = errors.New("bad JSON given in doCommands")
 	}
 	m.msg = OutgoingMessage{cmd, from, msg}
 	// need to fix this errorString
