@@ -33,7 +33,7 @@ type Client struct {
 	Username string
 	Conn	net.Conn
 	Jreader *json.Decoder
-	Write	bool
+	WriteAccess	bool
 }
 
 
@@ -67,6 +67,8 @@ func (client *Client) Read() (ReadMessage, error){
 			retMsg.Cmd = c.(string)
 		case "update-file":
 			retMsg.Cmd = c.(string)
+		case "request-write-access":
+		case "yield-write-access":
 		default:
 			// catches when a client EOFs
 			err = errors.New("Read: no cmd parsed")
@@ -89,6 +91,21 @@ func (client *Client) Read() (ReadMessage, error){
 	return retMsg, err
 }
 
+func (c *Client) Write(command string, payload string) error {
+	m := WriteMessage{command, payload}
+	var err error
+	b, e := json.Marshal(m)
+	if e != nil {
+		err = errors.New("Write: json marshal failed: " + e.Error())
+		return e
+	}
+	n, e := c.Conn.Write(b)
+	if n == 0 || e != nil {
+		err = errors.New("Write: conn.Write failed: " + e.Error())
+	}
+	return err
+}
+
 func Connect(username string) (*Client, error) {
 	var c = new(Client)
 	var err error
@@ -106,7 +123,7 @@ func Connect(username string) (*Client, error) {
 	if err != nil || n == 0 {
 		return nil, err
 	}
-	c.Write = false
+	c.WriteAccess = false
 	return c, err
 }
 

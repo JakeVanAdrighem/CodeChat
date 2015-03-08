@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
-	"encoding/json"
+	//"encoding/json"
 )
 
 func runReader(client *codechat.Client) {
@@ -15,7 +15,9 @@ func runReader(client *codechat.Client) {
 		read, err = client.Read()
 		if err != nil {
 			log.Println(err)
-			return
+			if err.Error() == "EOF" {
+				return
+			}
 		}
 		switch read.Cmd {
 		case "success":
@@ -46,14 +48,7 @@ func main() {
 			return
 		}
 		readStr := strings.TrimSpace(string(read))
-		m := codechat.WriteMessage{"msg", readStr}
-		//fmt.Println(m)
-		b, e := json.Marshal(m)
-		if e != nil {
-			log.Println("somethin happened...")
-			continue
-		}
-		client.Conn.Write(b)
+		client.Write("msg", readStr)
 		//fmt.Println(b)
 	}
 	
