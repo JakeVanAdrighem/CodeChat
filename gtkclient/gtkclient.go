@@ -1,17 +1,11 @@
 package main
 
 import (
-	"encoding/json"
-	//"flag"
-	//"fmt"
+	codechat "CodeChat/client"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
 	"github.com/mattn/go-gtk/gtksourceview"
 	"log"
-	"net"
-	// "sync"
-	//"os"
-	//"strings"
 )
 
 type Layout struct {
@@ -22,7 +16,6 @@ type Layout struct {
 
 	// objects
 	editor       *gtksourceview.SourceView
-	editorbuf    *gtksourceview.SourceBuffer
 	inputEntry   *gtk.Entry
 	inputButton  *gtk.Button
 	chatMessages *gtk.TextView
@@ -30,15 +23,15 @@ type Layout struct {
 
 /*
 							main
-	+---------------------------------------+
-	|		left	  	|		right		|
+	+----------------------------------------+
+	|		left		|		right		|
 	|					|					|
 	|					|					|
 	|					|					|
 	|					|					|
 	|					+-------------------+
 	|					|				|btn|
-	+-------------------+-------------------+
+	+--------------------+-------------------+
 
 */
 func layoutInit() Layout {
@@ -80,7 +73,7 @@ func layoutInit() Layout {
 	chatFrame.SetSizeRequest(500, 550)
 	inputFrame.SetSizeRequest(500, 50)
 
-	return Layout{mainFrame, leftFrame, rightPane, editor, editorbuf, inputEntry, inputButton, chatMessages}
+	return Layout{mainFrame, leftFrame, rightPane, editor, inputEntry, inputButton, chatMessages}
 }
 
 type Message struct {
@@ -93,50 +86,25 @@ type Connect struct {
 	Username string `json:"username"`
 }
 
-func read(conn net.Conn, lyt *Layout) {
-	// b := make([]byte, 4096)
-	d := json.NewDecoder(conn)
+func doRead(client *codechat.Client, lyt *Layout) {
 	for {
-		var v map[string]interface{}
-		err := d.Decode(&v)
+		read, err := client.Read()
 		if err != nil {
-			log.Println("error, bad json")
-			// should exit here : signifies a dead server
-			return
+			log.Println(err)
+			if err.Error() == "EOF" {
+				return
+			}
 		}
-		// Catch a response from the server
-		if s, ok := v["success"]; ok {
-			if s.(bool) {
-				log.Println("success")
-			} else {
-				log.Println("read: command failed")
-				log.Println("returned: ", v["status-message"])
-			}
-			// Catch general messages from the server
-		} else if c, ok := v["cmd"]; ok {
-			switch c {
-			case "message":
-				log.Println("got message")
-				var end gtk.TextIter
-				buffer := lyt.chatMessages.GetBuffer()
-				buffer.GetEndIter(&end)
-				buffer.Insert(&end, v["payload"].(string)+"\n")
-			case "client-exit":
-				log.Println("client exited")
-			case "client-connect":
-				log.Println("client entered")
-			case "update-file":
-				log.Println("file updated")
-				log.Println("file:", v["payload"].(string))
-				var end gtk.TextIter
-				// lyt.editorbuf.GetStartIter(&start)
-				lyt.editorbuf.GetEndIter(&end)
-				lyt.editorbuf.Insert(&end, v["payload"].(string))
-			default:
-				log.Println("no cmd parsed. got: ", v)
-			}
-		} else {
-			log.Println("json parsing failed, got: ", v)
+		switch read.Cmd {
+		case "success":
+			log.Println("success")
+		case "message":
+			var end gtk.TextIter
+			buffer := lyt.chatMessages.GetBuffer()
+			buffer.GetEndIter(&end)
+			buffer.Insert(&end, read.Payload +"\n")
+		default:
+			log.Println(read.From, read.Cmd, read.Payload)
 		}
 	}
 }
@@ -146,7 +114,7 @@ func main() {
 
 	var name string
 	var err error
-	var c net.Conn
+	var client *codechat.Client
 
 	gtk.Init(nil)
 	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
@@ -160,9 +128,7 @@ func main() {
 
 	layout := layoutInit()
 
-	// try adding an event handler onto the inputButton
-	// try to attach a 'Return' key handler as well
-
+	// Send a message to the server when the input button is clicked
 	layout.inputButton.Clicked(func() {
 		// send mesage here
 		msg := layout.inputEntry.GetText()
@@ -172,14 +138,11 @@ func main() {
 		buffer.GetEndIter(&end)
 		buffer.Insert(&end, "you: "+msg+"\n")
 		layout.inputEntry.SetText("")
-		m := Message{"msg", msg}
-		b, e := json.Marshal(m)
-		if e != nil {
-			log.Println("somethin happened from click...")
-		}
-		c.Write(b)
+		// write msg here
+		client.Write("msg", msg)
 	})
-
+	// Send a message to the server when the user hits enter in the text
+	// input
 	layout.inputEntry.Connect("activate", func() {
 		msg := layout.inputEntry.GetText()
 		println("enter pressed: ", msg)
@@ -188,30 +151,11 @@ func main() {
 		buffer.GetEndIter(&end)
 		buffer.Insert(&end, "you: "+msg+"\n")
 		layout.inputEntry.SetText("")
-		m := Message{"msg", msg}
-		//fmt.Println(m)
-		b, e := json.Marshal(m)
-		if e != nil {
-			log.Println("somethin happened from enter...")
-		}
-		c.Write(b)
-	})
-	buffer := layout.editor.GetBuffer()
-	buffer.Connect("changed", func() {
-		println("editor changed")
-		var start, end gtk.TextIter
-		buffer.GetStartIter(&start)
-		buffer.GetEndIter(&end)
-		msg := buffer.GetText(&start, &end, false)
-		log.Println("send file: ", msg)
-		m := Message{"update-file", msg}
-		b, e := json.Marshal(m)
-		if e != nil {
-			log.Println("somethin happened from enter...")
-		}
-		c.Write(b)
+		// write msg here
+		client.Write("msg", msg)
 	})
 
+	// Show a dialog to get the username on startup
 	messagedialog := gtk.NewDialog()
 	connectBox := messagedialog.GetVBox()
 	label := gtk.NewLabel("username")
@@ -230,26 +174,29 @@ func main() {
 	username.Show()
 	messagedialog.Run()
 	messagedialog.Destroy()
+	// End Dialog
+	
+	// Setup the window
 	window.Add(layout.mainFrame)
 	window.SetSizeRequest(1000, 600)
 	window.ShowAll()
 
-	c, err = net.Dial("tcp", "127.0.0.1:8080")
+	// Connect the client
+	client, err = codechat.Connect(name)
+	
 	if err != nil {
-		log.Println(err)
+		log.Println("could not connect")
 		return
+	} else {
+		var end gtk.TextIter
+		buffer := layout.chatMessages.GetBuffer()
+		buffer.GetEndIter(&end)
+		buffer.Insert(&end, "Successfully connected as " + client.Username + "\n")
 	}
-	defer c.Close()
 
-	go read(c, &layout)
+	defer client.Conn.Close()
 
-	user := Connect{"connect", name}
-	b, err := json.Marshal(user)
+	go doRead(client, &layout)
 
-	n, err := c.Write(b)
-	if err != nil || n == 0 {
-		log.Println(err)
-		return
-	}
 	gtk.Main()
 }
