@@ -42,7 +42,7 @@ func main() {
 		return
 	}
 	
-	defer client.Close()
+	defer client.Close("reasons")
 	
 	go runReader(client)
 	

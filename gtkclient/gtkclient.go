@@ -10,12 +10,16 @@ import (
 
 type Layout struct {
 	// frames + panes
-	mainFrame  gtk.IWidget
-	leftFrame  gtk.IWidget
-	rightFrame gtk.IWidget
+	mainFrame  	*gtk.Frame
+	left  		*gtk.Frame
+	right 		*gtk.VPaned
+
+	leftEvent	*gtk.EventBox
+	rightEvent  *gtk.EventBox
 
 	// objects
 	editor       *gtksourceview.SourceView
+	editorBuf    *gtksourceview.SourceBuffer
 	inputEntry   *gtk.Entry
 	inputButton  *gtk.Button
 	chatMessages *gtk.TextView
@@ -43,8 +47,8 @@ func layoutInit() Layout {
 	leftBox.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	leftBox.SetShadowType(gtk.SHADOW_IN)
 	// need to figure out this sourceview thing
-	editorbuf := gtksourceview.NewSourceBuffer()
-	editor := gtksourceview.NewSourceViewWithBuffer(editorbuf)
+	editorBuf := gtksourceview.NewSourceBuffer()
+	editor := gtksourceview.NewSourceViewWithBuffer(editorBuf)
 	leftBox.Add(editor)
 	leftFrame.Add(leftBox)
 	rightPane := gtk.NewVPaned()
@@ -73,7 +77,7 @@ func layoutInit() Layout {
 	chatFrame.SetSizeRequest(500, 550)
 	inputFrame.SetSizeRequest(500, 50)
 
-	return Layout{mainFrame, leftFrame, rightPane, editor, inputEntry, inputButton, chatMessages}
+	return Layout{mainFrame, leftFrame, rightPane, leftEvent, rightEvent, editor, editorBuf, inputEntry, inputButton, chatMessages}
 }
 
 type Message struct {
@@ -159,6 +163,43 @@ func main() {
 		layout.inputEntry.SetText("")
 		// write msg here
 		client.Write("msg", msg)
+	})
+
+	// User has entered some text in the editor window
+	// send update-file 
+	layout.editorBuf.Connect("end-user-action", func() {
+		var start, end gtk.TextIter
+		layout.editorBuf.GetStartIter(&start)
+		layout.editorBuf.GetEndIter(&end)
+		log.Println("New file:")
+		log.Println(layout.editorBuf.GetText(&start, &end, true))
+	})
+
+
+	// When focus enters the right side (editor):
+	//		- set editor uneditable
+	//		- set client.writeaccess false
+	//		- send yield-write-access command
+	// When focus enters the left side (chatmsgs or chat entry):
+	//		- send request-write-access command
+	//		- test client.writeaccess
+	//		- if true -> set left editable and let the edits flow
+	//		- if false -> wait (..?)
+
+	layout.left.Connect("move-focus", func() {
+		log.Println("left side move focus.")
+	})
+	
+	layout.right.Connect("move-focus", func() {
+		log.Println("right side move focus.")
+	})
+
+	layout.left.Connect("grab-focus", func() {
+		log.Println("left side got focus.")
+	})
+	
+	layout.right.Connect("grab-focus", func() {
+		log.Println("right side got focus.")
 	})
 
 	// Show a dialog to get the username on startup
