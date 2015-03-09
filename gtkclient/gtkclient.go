@@ -30,6 +30,8 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 		case "client-connect":
 			buffer.GetEndIter(&end)
 			buffer.Insert(&end, read.From + " has entered.\n")
+		case "update-file":
+			lyt.EditBuffer.SetText(read.Payload)
 		default:
 			log.Println(read.From, read.Cmd, read.Payload)
 		}
@@ -56,30 +58,25 @@ func main() {
 	var client *codechat.Client
 
 	lyt := new(layout.Layout)
-
 	lyt.Init()
 
 	// Send a message to the server when the input button is clicked
 	lyt.SendBtn.Clicked(func () {
 		messageAction(client, lyt)
 	})
-	// Send a message to the server when the user hits enter in the text
-	// input
+	// Send a message to the server when the user hits enter
 	lyt.ChatEntry.Connect("activate", func () {
 		messageAction(client, lyt)
 	})
-
-	//// User has entered some text in the editor window
-	//// send update-file 
-	//layout.editorBuf.Connect("end-user-action", func() {
-		//var start, end gtk.TextIter
-		//layout.editorBuf.GetStartIter(&start)
-		//layout.editorBuf.GetEndIter(&end)
-		//log.Println("New file:")
-		//log.Println(layout.editorBuf.GetText(&start, &end, true))
-	//})
-
-
+	// User has entered some text in the editor window
+	// send update-file 
+	lyt.EditBuffer.Connect("end-user-action", func() {
+		var start, end gtk.TextIter
+		lyt.EditBuffer.GetStartIter(&start)
+		lyt.EditBuffer.GetEndIter(&end)
+		client.Write("update-file",lyt.EditBuffer.GetText(&start, &end, true))
+	})
+	
 	// When focus enters the right side (editor):
 	//		- set editor uneditable
 	//		- set client.writeaccess false
@@ -90,10 +87,11 @@ func main() {
 	//		- if true -> set left editable and let the edits flow
 	//		- if false -> wait (..?)
 
-
-
 	// Connect the client
 	name = layout.PromptUsername()
+	if name == "" {
+		name = "dumbass"
+	}
 	client, err = codechat.Connect(name)
 	if err != nil {
 		log.Println("could not connect")

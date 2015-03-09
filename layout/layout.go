@@ -37,13 +37,13 @@ type Layout struct {
 	// left widgets
 	editWindow	*gtk.ScrolledWindow
 	EditBuffer  *gtksource.SourceBuffer
-	editView	   *gtksource.SourceView
+	EditView	   *gtksource.SourceView
 	editStatusBar  *gtk.Statusbar
 	// right widgets
 	chatWindow *gtk.ScrolledWindow
 	chatTagTable *gtk.TextTagTable
 	ChatBuffer *gtk.TextBuffer
-	chatView   *gtk.TextView
+	ChatView   *gtk.TextView
 	chatHBox   *gtk.HBox
 	MessageBuffer *gtk.EntryBuffer
 	ChatEntry  *gtk.Entry
@@ -80,9 +80,9 @@ func (lyt *Layout) Init() {
 	lyt.editWindow.SetShadowType(gtk.SHADOW_IN)
 	
 	lyt.EditBuffer = gtksource.NewSourceBuffer()
-	lyt.editView = gtksource.NewSourceViewWithBuffer(lyt.EditBuffer)
+	lyt.EditView = gtksource.NewSourceViewWithBuffer(lyt.EditBuffer)
 	lyt.editStatusBar = gtk.NewStatusbar()
-	lyt.editWindow.Add(lyt.editView)
+	lyt.editWindow.Add(lyt.EditView)
 	
 	lyt.leftVBox.PackStart(lyt.editWindow, true, true, 1)
 	lyt.leftVBox.PackEnd(lyt.editStatusBar, false, false, 2)
@@ -96,10 +96,10 @@ func (lyt *Layout) Init() {
 	
 	lyt.chatTagTable = gtk.NewTextTagTable()
 	lyt.ChatBuffer = gtk.NewTextBuffer(lyt.chatTagTable)
-	lyt.chatView = gtk.NewTextViewWithBuffer(*lyt.ChatBuffer)
-	lyt.chatView.SetEditable(false)
-	lyt.chatView.SetCursorVisible(false)
-	lyt.chatWindow.Add(lyt.chatView)
+	lyt.ChatView = gtk.NewTextViewWithBuffer(*lyt.ChatBuffer)
+	lyt.ChatView.SetEditable(false)
+	lyt.ChatView.SetCursorVisible(false)
+	lyt.chatWindow.Add(lyt.ChatView)
 	lyt.chatHBox = gtk.NewHBox(false, 0)
 	lyt.MessageBuffer = gtk.NewEntryBuffer("")
 	lyt.ChatEntry = gtk.NewEntryWithBuffer(lyt.MessageBuffer)
