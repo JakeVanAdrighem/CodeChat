@@ -42,8 +42,12 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 			gdk.ThreadsEnter()
 			//lyt.EditBuffer.SetEditable(false)
 			//lyt.EditBuffer.SetCursorVisible(false)
-			lang := lyt.EditLangMgr.GuessLanguage("",read.Payload)
-			lyt.EditBuffer.SetLanguage(lang)
+			//lang := lyt.EditLangMgr.GuessLanguage("",read.Payload)
+			//if *lang != nil {
+				////log.Println(lang.GetStyleIds())
+				//log.Println(lang)
+				//lyt.EditBuffer.SetLanguage(lang)
+			//}
 			lyt.EditBuffer.SetText(read.Payload)
 			gdk.ThreadsLeave()
 		default:

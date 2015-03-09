@@ -82,8 +82,12 @@ func (lyt *Layout) Init() {
 	
 	lyt.EditBuffer = gtksource.NewSourceBuffer()
 	lyt.EditLangMgr = gtksource.SourceLanguageManagerGetDefault()
-	//lyt.EditBuffer.SetHighlightSyntax(true)
+	lyt.EditBuffer.SetHighlightSyntax(true)
+	lang := lyt.EditLangMgr.GetLanguage("go")
+	lyt.EditBuffer.SetLanguage(lang)
 	lyt.EditView = gtksource.NewSourceViewWithBuffer(lyt.EditBuffer)
+	lyt.EditView.SetHighlightCurrentLine(true)
+	lyt.EditView.ModifyFontEasy("Monospace 8")
 	lyt.editStatusBar = gtk.NewStatusbar()
 	lyt.editWindow.Add(lyt.EditView)
 	
