@@ -84,8 +84,8 @@ func (lyt *Layout) Init() {
 	lyt.editStatusBar = gtk.NewStatusbar()
 	lyt.editWindow.Add(lyt.editView)
 	
-	lyt.leftVBox.PackEnd(lyt.editWindow, true, true, 1)
-	lyt.leftVBox.PackStart(lyt.editStatusBar, false, false, 1)
+	lyt.leftVBox.PackStart(lyt.editWindow, true, true, 1)
+	lyt.leftVBox.PackEnd(lyt.editStatusBar, false, false, 2)
 	
 	lyt.leftFrame.Add(lyt.leftVBox)
 
@@ -109,7 +109,7 @@ func (lyt *Layout) Init() {
 	lyt.chatHBox.PackEnd(lyt.SendBtn, false, false, 0)
 	
 	lyt.rightVBox.PackStart(lyt.chatWindow, true, true, 1)
-	lyt.rightVBox.PackStart(lyt.chatHBox, false, false, 1)
+	lyt.rightVBox.PackStart(lyt.chatHBox, false, false, 0)
 	
 	lyt.rightFrame.Add(lyt.rightVBox)
 	
@@ -123,7 +123,7 @@ func (lyt *Layout) Init() {
 	
 	// Show the window
 	lyt.win.Add(lyt.mainBox)
-	// lyt.win.SetSizeRequest(1000, 600)
+	lyt.win.SetSizeRequest(800, 400)
 	lyt.win.ShowAll()
 }
 
