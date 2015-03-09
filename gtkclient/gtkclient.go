@@ -4,12 +4,15 @@ import (
 	codechat "CodeChat/client"
 	"CodeChat/layout"
 	"github.com/mattn/go-gtk/gtk"
+	"github.com/mattn/go-gtk/gdk"
 	"log"
+	"sync"
 )
 
+var WriteLock sync.Mutex
+
 func doRead(client *codechat.Client, lyt *layout.Layout) {
-	buffer := lyt.ChatBuffer
-	var end gtk.TextIter
+	
 	for {
 		read, err := client.Read()
 		if err != nil {
@@ -22,16 +25,24 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 		case "success":
 			log.Println("success")
 		case "message":
+			buffer := lyt.ChatBuffer
+			var end gtk.TextIter
 			buffer.GetEndIter(&end)
 			buffer.Insert(&end, read.From + ": " + read.Payload +"\n")
 		case "client-exit":
+			buffer := lyt.ChatBuffer
+			var end gtk.TextIter
 			buffer.GetEndIter(&end)
 			buffer.Insert(&end, read.From + " has quit (" + read.Payload + ")\n")
 		case "client-connect":
+			buffer := lyt.ChatBuffer
+			var end gtk.TextIter
 			buffer.GetEndIter(&end)
 			buffer.Insert(&end, read.From + " has entered.\n")
 		case "update-file":
+			gdk.ThreadsEnter()
 			lyt.EditBuffer.SetText(read.Payload)
+			gdk.ThreadsLeave()
 		default:
 			log.Println(read.From, read.Cmd, read.Payload)
 		}
@@ -72,9 +83,12 @@ func main() {
 	// send update-file 
 	lyt.EditBuffer.Connect("end-user-action", func() {
 		var start, end gtk.TextIter
+		WriteLock.Lock()
 		lyt.EditBuffer.GetStartIter(&start)
 		lyt.EditBuffer.GetEndIter(&end)
-		client.Write("update-file",lyt.EditBuffer.GetText(&start, &end, true))
+		file := lyt.EditBuffer.GetText(&start, &end, true)
+		client.Write("update-file",file)
+		WriteLock.Unlock()
 	})
 	
 	// When focus enters the right side (editor):
@@ -105,5 +119,6 @@ func main() {
 	defer client.Close("F THIS")
 
 	go doRead(client, lyt)
+	gdk.ThreadsInit()
 	gtk.Main()
 }
