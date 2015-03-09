@@ -14,7 +14,10 @@ GTKClient:
 [] code cleanup
 
 [] Editor
-    [] activate 'onchange' handler
+    [x] activate 'onchange' handler
+    [] get syntax highlighting to work
+    [] handle multiple writers
+    [] efficiency -> don't send whole file -> finegrain it
 
 [x] Chat Window
     [x] display text
