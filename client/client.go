@@ -149,13 +149,13 @@ func (c *Client) Close(reason string) {
 // the JSON decoder and the writeaccess flag.
 // Returns the Client. It is up to the user to close the client's
 // connection. Simply calling defer Client.Conn.Close() will do the
-// trick.
-func Connect(username string) (*Client, error) {
+// trick. Pass in ip and port as a string: 1.1.1.1:80
+func Connect(username string, ipport string) (*Client, error) {
 	var c = new(Client)
 	var err error
 	c.Username = username
 	// make the connection to the server
-	c.Conn, err = net.Dial("tcp", "127.0.0.1:8080")
+	c.Conn, err = net.Dial("tcp", ipport)
 	if err != nil {
 		return nil, err
 	}

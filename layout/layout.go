@@ -4,7 +4,7 @@ import (
 	"github.com/mattn/go-gtk/gtk"
 	"github.com/mattn/go-gtk/glib"
 	gtksource "github.com/mattn/go-gtk/gtksourceview"
-	//"log"
+	//"fmt"
 )
 /*
  * 						mainHBox
@@ -36,6 +36,7 @@ type Layout struct {
 	rightVBox *gtk.VBox
 	// left widgets
 	editWindow	*gtk.ScrolledWindow
+	EditLangMgr	*gtksource.SourceLanguageManager
 	EditBuffer  *gtksource.SourceBuffer
 	EditView	   *gtksource.SourceView
 	editStatusBar  *gtk.Statusbar
@@ -80,6 +81,8 @@ func (lyt *Layout) Init() {
 	lyt.editWindow.SetShadowType(gtk.SHADOW_IN)
 	
 	lyt.EditBuffer = gtksource.NewSourceBuffer()
+	lyt.EditLangMgr = gtksource.SourceLanguageManagerGetDefault()
+	//lyt.EditBuffer.SetHighlightSyntax(true)
 	lyt.EditView = gtksource.NewSourceViewWithBuffer(lyt.EditBuffer)
 	lyt.editStatusBar = gtk.NewStatusbar()
 	lyt.editWindow.Add(lyt.EditView)
@@ -127,25 +130,30 @@ func (lyt *Layout) Init() {
 	lyt.win.ShowAll()
 }
 
-func PromptUsername() (name string){
+func PromptUsername() (name string, ipport string) {
 	// Show a dialog to get the username on startup
 	dialog := gtk.NewDialog()
 	connectBox := dialog.GetVBox()
-	label := gtk.NewLabel("username")
+	ulabel := gtk.NewLabel("username")
+	ilabel := gtk.NewLabel("IP Address:Port")
 	username := gtk.NewEntry()
+	ip := gtk.NewEntry()
 	username.Connect("activate", func() {
 		name = username.GetText()
+		ipport = ip.GetText()
 		dialog.Destroy()
 	})
-	connectBox.Add(label)
+	connectBox.Add(ilabel)
+	connectBox.Add(ip)
+	connectBox.Add(ulabel)
 	connectBox.Add(username)
 	dialog.AddButton("connect", gtk.RESPONSE_OK)
 	dialog.Response(func() {
 		name = username.GetText()
+		ipport = ip.GetText()
 		dialog.Destroy()
 	})
-	label.Show()
-	username.Show()
+	dialog.ShowAll()
 	dialog.Run()
 	//messagedialog.Destroy()
 	// End Dialog

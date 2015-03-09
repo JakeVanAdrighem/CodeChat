@@ -12,7 +12,6 @@ import (
 var WriteLock sync.Mutex
 
 func doRead(client *codechat.Client, lyt *layout.Layout) {
-	
 	for {
 		read, err := client.Read()
 		if err != nil {
@@ -41,6 +40,10 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 			buffer.Insert(&end, read.From + " has entered.\n")
 		case "update-file":
 			gdk.ThreadsEnter()
+			//lyt.EditBuffer.SetEditable(false)
+			//lyt.EditBuffer.SetCursorVisible(false)
+			lang := lyt.EditLangMgr.GuessLanguage("",read.Payload)
+			lyt.EditBuffer.SetLanguage(lang)
 			lyt.EditBuffer.SetText(read.Payload)
 			gdk.ThreadsLeave()
 		default:
@@ -64,7 +67,7 @@ func messageAction(client *codechat.Client, lyt *layout.Layout) {
 }
 
 func main() {
-	var name string
+	var name,ipport string
 	var err error
 	var client *codechat.Client
 
@@ -102,11 +105,14 @@ func main() {
 	//		- if false -> wait (..?)
 
 	// Connect the client
-	name = layout.PromptUsername()
+	name, ipport = layout.PromptUsername()
 	if name == "" {
 		name = "dumbass"
+	} 
+	if ipport == "" {
+		ipport = "127.0.0.1:8080"
 	}
-	client, err = codechat.Connect(name)
+	client, err = codechat.Connect(name, ipport)
 	if err != nil {
 		log.Println("could not connect")
 		return
