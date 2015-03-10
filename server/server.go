@@ -7,7 +7,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	// "flag" // for command line args
+	"os" // for command line args
 	"log"
 	"net"
 	"sync"
@@ -232,7 +232,15 @@ func handleConnection(conn net.Conn, serv *Server) {
 }
 
 func main() {
-	log.Println("CodeChat Server Starting")
+	var port string
+	args := os.Args[1:]
+	if len(args) == 0 {
+		log.Fatal("Need a port")
+	} else {
+		port = args[0]
+	}
+
+	log.Println("CodeChat Server Starting on port " + port)
 
 	// Initialize the server
 	serv := new(Server)
@@ -243,7 +251,7 @@ func main() {
 	go serv.broadcast()
 
 	// Set up networking
-	ln, err := net.Listen("tcp", ":8080")
+	ln, err := net.Listen("tcp", ":"+port)
 	if checkErr(err) {
 		return
 	}
