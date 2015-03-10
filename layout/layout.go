@@ -3,7 +3,8 @@ package layout
 import (
 	"github.com/mattn/go-gtk/gtk"
 	"github.com/mattn/go-gtk/glib"
-	gtksource "github.com/mattn/go-gtk/gtksourceview"
+    // gramasaurous
+	gtksource "github.com/gramasaurous/go-gtk/gtksourceview"
 	//"fmt"
 )
 /*
@@ -83,7 +84,8 @@ func (lyt *Layout) Init() {
 	lyt.EditBuffer = gtksource.NewSourceBuffer()
 	lyt.EditLangMgr = gtksource.SourceLanguageManagerGetDefault()
 	lyt.EditBuffer.SetHighlightSyntax(true)
-	lang := lyt.EditLangMgr.GetLanguage("haskell")
+	lyt.EditBuffer.SetHighlightMatchingBrackets(true)
+	lang := lyt.EditLangMgr.GetLanguage("go")
 	lyt.EditBuffer.SetLanguage(lang)
 	lyt.EditView = gtksource.NewSourceViewWithBuffer(lyt.EditBuffer)
 	lyt.EditView.SetHighlightCurrentLine(true)

@@ -40,14 +40,6 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 			buffer.Insert(&end, read.From + " has entered.\n")
 		case "update-file":
 			gdk.ThreadsEnter()
-			//lyt.EditBuffer.SetEditable(false)
-			//lyt.EditBuffer.SetCursorVisible(false)
-			//lang := lyt.EditLangMgr.GuessLanguage("",read.Payload)
-			//if *lang != nil {
-				////log.Println(lang.GetStyleIds())
-				//log.Println(lang)
-				//lyt.EditBuffer.SetLanguage(lang)
-			//}
 			ctx := lyt.EditStatusBar.GetContextId("CodeChat")
 			lyt.EditStatusBar.Pop(ctx)
 			lyt.EditStatusBar.Push(ctx, "last edited by " + read.From)
