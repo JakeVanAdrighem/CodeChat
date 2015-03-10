@@ -39,7 +39,7 @@ type Layout struct {
 	EditLangMgr	*gtksource.SourceLanguageManager
 	EditBuffer  *gtksource.SourceBuffer
 	EditView	   *gtksource.SourceView
-	editStatusBar  *gtk.Statusbar
+	EditStatusBar  *gtk.Statusbar
 	// right widgets
 	chatWindow *gtk.ScrolledWindow
 	chatTagTable *gtk.TextTagTable
@@ -62,37 +62,38 @@ func (lyt *Layout) Init() {
 		println("peace out!", ctx.Data().(string))
 		gtk.MainQuit()
 	}, "CodeChat")
-	
+
 	lyt.leftEvent = gtk.NewEventBox()
 	lyt.rightEvent = gtk.NewEventBox()
 	// main horizontal container, equal 1px spacing
 	lyt.mainBox = gtk.NewHBox(true, 1)
-	
+
 	lyt.leftFrame = gtk.NewFrame("editor")
 	lyt.rightFrame = gtk.NewFrame("chat")
-	
+
 	// left and right containers, spacing not equal
 	lyt.leftVBox = gtk.NewVBox(false, 1)
 	lyt.rightVBox = gtk.NewVBox(false, 1)
-	
+
 	// build up the left side
 	lyt.editWindow = gtk.NewScrolledWindow(nil,nil)
 	lyt.editWindow.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	lyt.editWindow.SetShadowType(gtk.SHADOW_IN)
-	
+
 	lyt.EditBuffer = gtksource.NewSourceBuffer()
 	lyt.EditLangMgr = gtksource.SourceLanguageManagerGetDefault()
 	lyt.EditBuffer.SetHighlightSyntax(true)
-	lang := lyt.EditLangMgr.GetLanguage("go")
+	lang := lyt.EditLangMgr.GetLanguage("haskell")
 	lyt.EditBuffer.SetLanguage(lang)
 	lyt.EditView = gtksource.NewSourceViewWithBuffer(lyt.EditBuffer)
 	lyt.EditView.SetHighlightCurrentLine(true)
+	lyt.EditView.SetShowLineNumbers(true)
 	lyt.EditView.ModifyFontEasy("Monospace 8")
-	lyt.editStatusBar = gtk.NewStatusbar()
+	lyt.EditStatusBar = gtk.NewStatusbar()
 	lyt.editWindow.Add(lyt.EditView)
 	
 	lyt.leftVBox.PackStart(lyt.editWindow, true, true, 1)
-	lyt.leftVBox.PackEnd(lyt.editStatusBar, false, false, 2)
+	lyt.leftVBox.PackEnd(lyt.EditStatusBar, false, false, 2)
 	
 	lyt.leftFrame.Add(lyt.leftVBox)
 

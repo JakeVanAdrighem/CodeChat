@@ -2,11 +2,11 @@ CodeChat Todo List
 
 1. [x] write back JSON to clients (server.go)
 2. [x] clean up/refactor server.go
-3. [] implement text editor commands
-4. [] debug client-server communications
+3. [x] implement text editor commands
+4. [x] debug client-server communications
 
-5. [] work on the go client
-6. [] have client parse JSON
+5. [x] work on the go client
+6. [x] have client parse JSON
 
 
 GTKClient:
@@ -15,10 +15,15 @@ GTKClient:
 
 [] Editor
     [x] activate 'onchange' handler
-    [] get syntax highlighting to work
-    [] handle multiple writers
+    [x] get syntax highlighting to work
+    [x] handle multiple writers
     [] efficiency -> don't send whole file -> finegrain it
-
+    [] more editor things
+        [] non-hardcoded language
+        [] styles*
+        [] matching brackets*
+        [] config file?
+        * requires forking go-gtk
 [x] Chat Window
     [x] display text
     [x] recieve messages and display them

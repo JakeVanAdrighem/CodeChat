@@ -48,6 +48,9 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 				//log.Println(lang)
 				//lyt.EditBuffer.SetLanguage(lang)
 			//}
+			ctx := lyt.EditStatusBar.GetContextId("CodeChat")
+			lyt.EditStatusBar.Pop(ctx)
+			lyt.EditStatusBar.Push(ctx, "last edited by " + read.From)
 			lyt.EditBuffer.SetText(read.Payload)
 			gdk.ThreadsLeave()
 		default:
@@ -89,15 +92,18 @@ func main() {
 	// User has entered some text in the editor window
 	// send update-file 
 	lyt.EditBuffer.Connect("end-user-action", func() {
-		var start, end gtk.TextIter
 		WriteLock.Lock()
+		var start, end gtk.TextIter
+		ctx := lyt.EditStatusBar.GetContextId("CodeChat")
+		lyt.EditStatusBar.Pop(ctx)
+		lyt.EditStatusBar.Push(ctx, "last edited by you")
 		lyt.EditBuffer.GetStartIter(&start)
 		lyt.EditBuffer.GetEndIter(&end)
 		file := lyt.EditBuffer.GetText(&start, &end, true)
 		client.Write("update-file",file)
 		WriteLock.Unlock()
 	})
-	
+
 	// When focus enters the right side (editor):
 	//		- set editor uneditable
 	//		- set client.writeaccess false
@@ -112,7 +118,8 @@ func main() {
 	name, ipport = layout.PromptUsername()
 	if name == "" {
 		name = "dumbass"
-	} 
+	}
+	// connect locally if there is no 
 	if ipport == "" {
 		ipport = "127.0.0.1:8080"
 	}
