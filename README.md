@@ -1,6 +1,8 @@
 # CodeChat #
 Collaborative Development Environment
+
 CMPS 112
+
 2015
 
 By: Graham Greving, David Taylor, and Jake VanAdrighem
@@ -22,17 +24,14 @@ and builds are fairly easy.
 
 To build the server:
 
-``
-cd server
-go build
-``
+  cd server
+  go build
 
 To build the client:
 
-``
-cd gtkclient
-go build
-``
+  cd gtkclient
+  go build
+
 
 Be sure to have all dependencies installed prior to building.
 
