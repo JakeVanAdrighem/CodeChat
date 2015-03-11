@@ -30,7 +30,7 @@ Adds the client to the chat server with the provided username:
 		"msg":<message>
 	}
 
-### 2. rename ("old-username", "new-username")
+### 2. rename ("old-username", "new-username") ** not implemented **
 Changes the current client's username:
 
 	{
@@ -39,7 +39,7 @@ Changes the current client's username:
 		"newname":"<new-username>"
 	}
 
-### 3. get-clients()
+### 3. get-clients() ** not implemented **
 
 	{
 		"cmd":"get-clients"
@@ -54,13 +54,13 @@ Disconnects the client from the server:
 
 ## Text Editing Commands
 
-### 1. requestWriteAccess()
+### 1. requestWriteAccess() ** not implemented **
 
     {
         "cmd": "request-write-ccess"
     }
 
-### 2. yieldWriteAccess()
+### 2. yieldWriteAccess() ** not implemented **
 
     {
         "cmd":"yield-write-access"
@@ -79,7 +79,7 @@ server as JSON:
 
 	{
 		"success":<bool>,
-		"cmd":<command>,
+		"cmd":<command>,  /* command that was successful or unsuccessful */
         "status-message":"<status-message>"
 	}
 
@@ -98,40 +98,32 @@ When a new message has been sent to the chat:
 
 	{
 		"cmd":"message",
-		"user":"username"
+		"payload":"message-from-client",
+		"from":"from-client-username"
 	}
 
 When a new client enters the chat:
 
 	{
 		"cmd":"client-connect",
-		"user":"<username>"
+		"from":"from-client-username",
+		"payload":"<username>"
 	}
 
 When an existing client exits the chat:
 
 	{
 		"cmd":"client-exit",
-		"user":"<username>"
+		"from":"from-client-username",
+		"payload":"<username>"
 	}
 
 When the text file is updated:
 
     {
         "cmd":"update-file",
-        "file":new-file
-    }
-
-When write access is yielded:
-
-    {
-        "cmd":"write-access-yielded"
-    }
-
-When write access is granted:
-
-    {
-        "cmd":"write-access-granted"
+     	"from":"from-client-username",
+        "payload":new-file
     }
 
 Note that clients are responsible for keeping a list of current clients
