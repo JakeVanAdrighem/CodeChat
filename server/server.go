@@ -152,7 +152,7 @@ func (client *Client) doCommands(dec *json.Decoder, serv *Server) (message, erro
 			client.name = name.(string)
 			msg = serv.file // give the new client the latest copy of the file
 			from = client.name
-			cmd = "connect"
+			cmd = "client-connect"
 		} else {
 			e = errors.New("doCommands: no username passed to connect")
 			cmd = "connect"
@@ -188,12 +188,6 @@ func (client *Client) doCommands(dec *json.Decoder, serv *Server) (message, erro
 			cmd = "message"
 			errRet = false
 		}
-	// case "request-write-access":
-	// 	client.server.write.Lock()
-	// 	cmd = "write-access-granted"
-	// case "yield-write-access":
-	// 	client.server.write.Unlock()
-	// 	cmd = "write-access-yielded"
 	case "update-file":
 		if file, ok := v["msg"]; ok {
 			cmd = "update-file"
@@ -206,6 +200,10 @@ func (client *Client) doCommands(dec *json.Decoder, serv *Server) (message, erro
 	}
 	m.msg = OutgoingMessage{cmd, from, msg}
 	// need to fix this errorString
+	// don't send the whole file if not necessary.
+	if (cmd != "client-connect") {
+		msg = ""
+	}
 	m.res = ClientResponse{"return-status", cmd, errRet, msg}
 	m.err = e
 	return m, err
