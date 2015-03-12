@@ -13,19 +13,15 @@
 // It also exports the following functions:
 // 		Client.Read()
 // 		Client.Write()
-// 		Connect
+// 		Connect("username", "ip")
+//		Close("reason")
 
 package client
 
 import (
 	"encoding/json"
-	//"flag"
-	//"fmt"
 	"errors"
-	//"log"
 	"net"
-	//"os"
-	//"strings"
 )
 
 // WriteMessage : A message written to the server. Contains a command
@@ -42,6 +38,15 @@ type WriteMessage struct {
 type ReadMessage struct {
 	Cmd string
 	From string
+	Payload string
+}
+
+// ReturnStatus : The return status of a command executed on the server.
+// Identifies what command was executed, and if it succeeded or not.
+// Optionally contains a payload of some data from the server.
+type ReturnStatus struct {
+	Cmd string
+	Status bool
 	Payload string
 }
 
@@ -69,55 +74,58 @@ type Client struct {
 // commands
 // It is recommended that this function is called inside an infinite 
 // for-loop inside a goroutine.
-func (client *Client) Read() (ReadMessage, error){
+func (client *Client) Read() (*ReturnStatus, *ReadMessage, error){
 	var v map[string]interface{}
-	var retMsg ReadMessage
 	err := client.Jreader.Decode(&v)
 	if err != nil {
-		// should exit here : signifies a dead server
-		return retMsg, err
+		retErr := errors.New("Read: json failed" + err.Error())
+		return nil, nil, retErr
 	}
 	// Catch a response from the server
-	if s, ok := v["success"]; ok {
-		if s.(bool) {
-			retMsg.Cmd = "success"
-			retMsg.From = "server"
+	if c, ok := v["cmd"]; ok {
+		if c.(string) == "return-status" {
+			retStatus := new(ReturnStatus)
+			// check,set return values
+			if rc, ok := v["return-cmd"]; ok {
+				retStatus.Cmd = rc.(string)
+			}
+			if rc, ok := v["status"]; ok {
+				retStatus.Status = rc.(bool)
+			}
+			if rc, ok := v["payload"]; ok {
+				retStatus.Payload = rc.(string)
+			}
+			return retStatus, nil, err
 		} else {
-			err = errors.New("Read: previous command failed")
+			retMsg := new(ReadMessage)
+			switch c {
+				case "client-connect":
+					fallthrough
+				case "client-exit":
+					fallthrough
+				case "message":
+					fallthrough
+				case "update-file":
+					retMsg.Cmd = c.(string)
+				default:
+					err = errors.New("Read: unsupported command")
+			}
+			if f, ok := v["from"]; ok {
+				retMsg.From = f.(string)
+			} else {
+				err = errors.New("Read: no from given")
+			}
+			if p, ok := v["payload"]; ok {
+				// acceptable error
+				retMsg.Payload = p.(string)
+			} else {
+				// acceptable error
+				err = errors.New("Read: no payload given")
+			}
+			return nil, retMsg, err
 		}
-		// Catch general messages from the server
-	} else if c, ok := v["cmd"]; ok {
-		switch c {
-		case "message":
-			retMsg.Cmd = c.(string)
-		case "client-exit":
-			retMsg.Cmd = c.(string)
-		case "client-connect":
-			retMsg.Cmd = c.(string)
-		case "update-file":
-			retMsg.Cmd = c.(string)
-		case "request-write-access":
-		case "yield-write-access":
-		default:
-			// catches when a client EOFs
-			err = errors.New("Read: no cmd parsed")
-		}
-		if f, ok := v["from"]; ok {
-			retMsg.From = f.(string)
-		} else {
-			err = errors.New("Read: no from given")
-		}
-		if p, ok := v["payload"]; ok {
-			// acceptable error
-			retMsg.Payload = p.(string)
-		} else {
-			// acceptable error
-			err = errors.New("Read: no payload given")
-		}
-	} else {
-		err = errors.New("Read: json parsing failed")
 	}
-	return retMsg, err
+	return nil, nil, err
 }
 
 // Write : Writes a command and message to the sever.
@@ -140,8 +148,8 @@ func (c *Client) Write(command string, payload string) error {
 // Should be called with a defer to ensure it happens.
 // defer client.Close("reason")
 func (c *Client) Close(reason string) {
+	defer c.Conn.Close()
 	c.Write("exit", reason)
-	c.Conn.Close()
 }
 
 // Connect : Connects a user to the server, does all the necessary
@@ -155,6 +163,7 @@ func Connect(username string, ipport string) (*Client, error) {
 	var err error
 	c.Username = username
 	// make the connection to the server
+	//ipport looks like 192.158.0.1:8080
 	c.Conn, err = net.Dial("tcp", ipport)
 	if err != nil {
 		return nil, err

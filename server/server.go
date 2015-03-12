@@ -19,6 +19,7 @@ type Server struct {
 	numClients int
 	// broadcasting channel
 	serverChan chan message
+	file 	   string
 	write      sync.Mutex
 }
 
@@ -41,9 +42,10 @@ type message struct {
 
 // ClientResponse response message to a client
 type ClientResponse struct {
-	Success   bool   `json:"success"`
-	Cmd       string `json:"cmd"`
-	StatusMsg string `json:"status-message"`
+	Cmd         string `json:"cmd"`
+	ReturnCmd string `json:"return-cmd"`
+	Status 	  bool `json:"status"`
+	Payload	  string `json:"payload"`
 }
 
 // OutgoingMessage server message passed to all clients
@@ -130,12 +132,13 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
-func (client *Client) doCommands(dec *json.Decoder) (message, error) {
+func (client *Client) doCommands(dec *json.Decoder, serv *Server) (message, error) {
 	var m message
 	var e error
 	var msg string
 	var cmd string
 	var from string
+	errRet := true
 	m.client = *client
 	var v map[string]interface{}
 	err := dec.Decode(&v)
@@ -147,12 +150,13 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 	case "connect":
 		if name, ok := v["username"]; ok {
 			client.name = name.(string)
-			msg = client.name
+			msg = serv.file // give the new client the latest copy of the file
 			from = client.name
-			cmd = "client-connect"
+			cmd = "connect"
 		} else {
 			e = errors.New("doCommands: no username passed to connect")
 			cmd = "connect"
+			errRet = false
 		}
 	case "rename":
 		if newName, ok := v["newname"]; ok {
@@ -163,6 +167,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 		} else {
 			e = errors.New("doCommands: no name(s) passed to rename")
 			cmd = "rename"
+			errRet = false
 		}
 	case "exit":
 		if reason, ok := v["msg"]; ok {
@@ -181,6 +186,7 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 		} else {
 			e = errors.New("doCommands: no message passed to msg")
 			cmd = "message"
+			errRet = false
 		}
 	// case "request-write-access":
 	// 	client.server.write.Lock()
@@ -192,14 +198,15 @@ func (client *Client) doCommands(dec *json.Decoder) (message, error) {
 		if file, ok := v["msg"]; ok {
 			cmd = "update-file"
 			msg = file.(string)
+			serv.file = file.(string)
 		}
 	default:
 		e = errors.New("bad JSON given in doCommands")
+		errRet = false
 	}
 	m.msg = OutgoingMessage{cmd, from, msg}
 	// need to fix this errorString
-	errorString := ""
-	m.res = ClientResponse{e == nil, cmd, errorString}
+	m.res = ClientResponse{"return-status", cmd, errRet, msg}
 	m.err = e
 	return m, err
 }
@@ -220,7 +227,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 	// Create the JSON decoder
 	dec := json.NewDecoder(conn)
 	for {
-		m, err := user.doCommands(dec)
+		m, err := user.doCommands(dec, serv)
 		serv.serverChan <- m
 		if m.exitflag || err != nil {
 			// write back to clients
@@ -246,6 +253,7 @@ func main() {
 	serv := new(Server)
 	serv.clients = make(map[net.Conn]*Client)
 	serv.serverChan = make(chan message)
+	serv.file = ""
 
 	// Start the broadcaster
 	go serv.broadcast()

@@ -70,7 +70,7 @@ Disconnects the client from the server:
 
     {
         "cmd":"update-file",
-        "file":file
+        "file":<file>
     }
 
 ##Status Messages
@@ -78,16 +78,21 @@ Status of commands are always returned back to the client from the
 server as JSON:
 
 	{
-		"success":<bool>,
-		"cmd":<command>,  /* command that was successful or unsuccessful */
-        "status-message":"<status-message>"
+		"cmd":"return-status",
+		"return-command":<command>,
+		"status":<true,false>,
+		"payload":<payload from the server, if any>
 	}
 
-Success will be true or false depending on success or failure of the
-previous command, in the case of a failure, an error message is provided
-in the "error-msg" field. In commands where information is requested from
-the server, this info is passed back to the server in the "success-msg"
-field.
+Since all messages sent back from the server are indistinguishable,
+return-status are formatted as a "return-status" command. The string
+"return-command" contains the command that was recently attempted by the
+server. "status" is a boolean on the success, and payload contains any
+data sent back from the server (this is not always filled). An example
+where "payload" is filled is after the completion of a "connect." In this
+case, the payload contains the most recent version of the file being
+edited in the chatroom. This ensures that newly connected clients will
+have a copy of the file when they connect.
 
 ##General Messages
 Messages indicating server state are also passed back to clients for them
@@ -99,22 +104,22 @@ When a new message has been sent to the chat:
 	{
 		"cmd":"message",
 		"payload":"message-from-client",
-		"from":"from-client-username"
+		"from":<from-client-username>
 	}
 
 When a new client enters the chat:
 
 	{
 		"cmd":"client-connect",
-		"from":"from-client-username",
-		"payload":"<username>"
+		"from":<from-client-username>,
+		"payload":<username>
 	}
 
 When an existing client exits the chat:
 
 	{
 		"cmd":"client-exit",
-		"from":"from-client-username",
+		"from":<from-client-username>,
 		"payload":"<username>"
 	}
 
@@ -122,8 +127,8 @@ When the text file is updated:
 
     {
         "cmd":"update-file",
-     	"from":"from-client-username",
-        "payload":new-file
+     	"from":<from-client-username>,
+        "payload":<new-file>
     }
 
 Note that clients are responsible for keeping a list of current clients
