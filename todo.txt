@@ -12,6 +12,8 @@ CodeChat Todo List
 GTKClient:
 
 [] code cleanup
+[] documentation
+[] make the code presentable
 
 [] Editor
     [x] activate 'onchange' handler
@@ -21,7 +23,7 @@ GTKClient:
     [] more editor things
         [] non-hardcoded language
         [] styles*
-        [] matching brackets*
+        [x] matching brackets*
         [] config file?
         * requires forking go-gtk
 [x] Chat Window
