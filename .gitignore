@@ -14,3 +14,7 @@ client/client
 server/server
 gtkclient/gtkclient
 clientTest/clientTest
+*.aux
+*.log
+*.out
+report/report.pdf
