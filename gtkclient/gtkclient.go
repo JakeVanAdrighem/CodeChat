@@ -13,45 +13,52 @@ var WriteLock sync.Mutex
 
 func doRead(client *codechat.Client, lyt *layout.Layout) {
 	for {
-		read, err := client.Read()
+		ret, read, err := client.Read()
 		if err != nil {
 			log.Println(err)
 			if err.Error() == "EOF" {
 				return
 			}
 		}
-		switch read.Cmd {
-		case "success":
-			log.Println("success")
-		case "message":
-			buffer := lyt.ChatBuffer
-			var end gtk.TextIter
-			buffer.GetEndIter(&end)
-			buffer.Insert(&end, read.From + ": " + read.Payload +"\n")
-		case "client-exit":
-			buffer := lyt.ChatBuffer
-			var end gtk.TextIter
-			buffer.GetEndIter(&end)
-			buffer.Insert(&end, read.From + " has quit (" + read.Payload + ")\n")
-		case "client-connect":
-			buffer := lyt.ChatBuffer
-			var end gtk.TextIter
-			buffer.GetEndIter(&end)
-			buffer.Insert(&end, read.From + " has entered.\n")
-		case "update-file":
-			gdk.ThreadsEnter()
-			//lyt.EditBuffer.SetEditable(false)
-			//lyt.EditBuffer.SetCursorVisible(false)
-			//lang := lyt.EditLangMgr.GuessLanguage("",read.Payload)
-			//if *lang != nil {
-				////log.Println(lang.GetStyleIds())
-				//log.Println(lang)
-				//lyt.EditBuffer.SetLanguage(lang)
-			//}
-			lyt.EditBuffer.SetText(read.Payload)
-			gdk.ThreadsLeave()
-		default:
-			log.Println(read.From, read.Cmd, read.Payload)
+		// check if there is a returnstatus
+		if ret != nil {
+			//log.Println("got a return:", ret.Cmd, ret.Status, ret.Payload)
+			if ret.Cmd == "client-connect" {	
+				gdk.ThreadsEnter()
+				lyt.EditBuffer.SetText(ret.Payload)
+				gdk.ThreadsLeave()
+			}
+		} else if read != nil {
+			
+			switch read.Cmd {
+			case "success":
+				log.Println("success")
+				// if success is from a connect, update our file 
+			case "message":
+				buffer := lyt.ChatBuffer
+				var end gtk.TextIter
+				buffer.GetEndIter(&end)
+				buffer.Insert(&end, read.From + ": " + read.Payload +"\n")
+			case "client-exit":
+				buffer := lyt.ChatBuffer
+				var end gtk.TextIter
+				buffer.GetEndIter(&end)
+				buffer.Insert(&end, read.From + " has quit (" + read.Payload + ")\n")
+			case "client-connect":
+				buffer := lyt.ChatBuffer
+				var end gtk.TextIter
+				buffer.GetEndIter(&end)
+				buffer.Insert(&end, read.From + " has entered.\n")
+			case "update-file":
+				gdk.ThreadsEnter()
+				ctx := lyt.EditStatusBar.GetContextId("CodeChat")
+				lyt.EditStatusBar.Pop(ctx)
+				lyt.EditStatusBar.Push(ctx, "last edited by " + read.From)
+				lyt.EditBuffer.SetText(read.Payload)
+				gdk.ThreadsLeave()
+			default:
+				log.Println(read.From, read.Cmd, read.Payload)
+			}
 		}
 	}
 }
@@ -89,30 +96,24 @@ func main() {
 	// User has entered some text in the editor window
 	// send update-file 
 	lyt.EditBuffer.Connect("end-user-action", func() {
-		var start, end gtk.TextIter
 		WriteLock.Lock()
+		var start, end gtk.TextIter
+		ctx := lyt.EditStatusBar.GetContextId("CodeChat")
+		lyt.EditStatusBar.Pop(ctx)
+		lyt.EditStatusBar.Push(ctx, "last edited by you")
 		lyt.EditBuffer.GetStartIter(&start)
 		lyt.EditBuffer.GetEndIter(&end)
 		file := lyt.EditBuffer.GetText(&start, &end, true)
 		client.Write("update-file",file)
 		WriteLock.Unlock()
 	})
-	
-	// When focus enters the right side (editor):
-	//		- set editor uneditable
-	//		- set client.writeaccess false
-	//		- send yield-write-access command
-	// When focus enters the left side (chatmsgs or chat entry):
-	//		- send request-write-access command
-	//		- test client.writeaccess
-	//		- if true -> set left editable and let the edits flow
-	//		- if false -> wait (..?)
 
 	// Connect the client
 	name, ipport = layout.PromptUsername()
 	if name == "" {
 		name = "dumbass"
-	} 
+	}
+	// connect locally if there is no 
 	if ipport == "" {
 		ipport = "127.0.0.1:8080"
 	}
