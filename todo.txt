@@ -38,3 +38,9 @@ GTKClient:
 [] context switching
 
 [x] dialog to select login options
+
+[] Python Client
+    [] fix window quit
+    [] handle response reading
+    [] handle file-sending
+
