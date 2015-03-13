@@ -1,3 +1,4 @@
+'''
 // client.py
 // Authors: Graham Greving, David Taylor, Jake VanAdrighem
 // CMPS 112: Final Project - CodeChat
@@ -14,6 +15,7 @@
 // 		Client.Read()
 // 		Client.Write()
 // 		Connect
+'''
 import socket
 import json
 
@@ -22,7 +24,6 @@ import json
 class ConnectionClient():
     def _init_(self):
         #build self
-        self.con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.username = 'NoName'
         self.ip = '127.0.0.1'
         self.port = '8080'
@@ -33,6 +34,7 @@ class ConnectionClient():
         self.ip = ip
         #port must be int but is not assumed to be
         self.port = int(port)
+        self.con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.con.connect((self.ip,self.port))
 
     def Close(self):
