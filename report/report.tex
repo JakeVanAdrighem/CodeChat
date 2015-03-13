@@ -51,7 +51,7 @@ best to implement the server with a modular and language-agnostic text
 protocol. While this may introduce added overhead in terms of performance, 
 code size, and design/development time, the benefits of being able to create 
 clients in a variety of languages, potentially implementing unique 
-subsets of the server's commands, far outway any performance hits. The 
+subsets of the server's commands, far outweigh any performance hits. The 
 general architecture is a simple command protocol whereby a client can 
 issue a command, and some optional payload, which the server then processes  
 and writes back to all the other clients, as well as a status message to the 
@@ -67,16 +67,16 @@ means that while our server has the ability to support collaborative text
 editing, any client can simply implement a chat program with the same server, 
 and ignore any unsupported commands from the server. Very cool.
 
-To achieve language-agnosticity, we implemented a JSON protocol. We chose 
+To achieve language-agnosticism, we implemented a JSON protocol. We chose 
 JSON because it is quickly (if not already) becoming a standard in server 
 communications and most languages include libraries and packages for creating 
 JSON objects. Additionally, since JSON is simply text, it can be very easily 
 written to web sockets/connections in any language. I mentioned earlier the 
-tradeoffs, this is because when you implement a client and a server in the 
+trade-offs, this is because when you implement a client and a server in the 
 same language, you can take advantage of expected language features on both 
 sides of the connection. This is especially the case in a language like Go, 
 whereby communication across the network can essentially be the same as 
-communication across threads (with known/expected datatypes).
+communication across threads (with known/expected data-types).
 
 Currently implemented commands are: "connect", "exit", "update-file", 
 "message".
@@ -87,12 +87,12 @@ The server is intended to be running on some network machine with a publicly
 available IP address, it can additionally be run locally --- but this inhibits 
 the usefulness outside of debugging purposes. The program establishes a 
 network connection and loops listening for incoming connections (as most 
-servers do), when it recieves a connection, it spawns a separate goroutine 
+servers do), when it receives a connection, it spawns a separate ``goroutine'' 
 (a lightweight thread) to handle this connections commands, then continues 
 listening for more connections.
 
 Writing back to clients is handled in a single goroutine which is executed 
-before any incomming connections are established. This thread reads on an 
+before any incoming connections are established. This thread reads on an 
 internal channel.
 
 \subsection*{Client}
