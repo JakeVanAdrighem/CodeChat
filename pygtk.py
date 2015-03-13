@@ -9,12 +9,13 @@ import pango
 import gobject
 import gtk
 
+import client.py
+
 def win_quit():
 	print("peace out!")
 	gtk.MainQuit()
 
 class Layout:
-
 	def __init__(self):
 		win = gtk.Window()
 		win.set_position(gtk.WIN_POS_CENTER)
@@ -94,6 +95,8 @@ class Layout:
 		win.add(mainBox)
 		win.set_size_request(800, 400)
 		win.show_all()
+                
+
 
 	def messageAction():
 		print("message Action:")
