@@ -35,7 +35,18 @@ functionality would be in a unified platform, so these activities
 can be done seamlessly. This desire led to the idea of CodeChat.
 
 % Languages intro
-
+When planning the project, we were faced with the choice of which
+programming language(s) to use. We wanted to use a language with
+good networking support and a good concurrency model. We also
+wanted a language that is simple and intuitively clear, even if
+that meant that the code was more verbose. These requirements led
+us to choose Go as the primary language for the project. After
+the system was implemented, we were curious how the developer and
+user experience would change if implemented in a language with
+an opposing paradigm to Go: this led us to try to implement
+select portions of the code in Python. This exposure to multiple
+languages gave certain insights into how these two languages relate
+to one another.
 
 \section*{Architecture}
 
