@@ -170,7 +170,7 @@ func Connect(username string, ipport string) (*Client, error) {
 	}
 	c.Jreader = json.NewDecoder(c.Conn)
 	user := ConnectMsg{"connect", c.Username}
-	
+
 	b, err := json.Marshal(user)
 	n, err := c.Conn.Write(b)
 	if err != nil || n == 0 {

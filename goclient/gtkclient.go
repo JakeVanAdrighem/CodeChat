@@ -1,8 +1,8 @@
 package main
 
 import (
-	codechat "CodeChat/client"
-	"CodeChat/layout"
+	codechat "CodeChat/goclient/client"
+	"CodeChat/goclient/layout"
 	"github.com/mattn/go-gtk/gtk"
 	"github.com/mattn/go-gtk/gdk"
 	"log"
@@ -23,13 +23,13 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 		// check if there is a returnstatus
 		if ret != nil {
 			//log.Println("got a return:", ret.Cmd, ret.Status, ret.Payload)
-			if ret.Cmd == "client-connect" {	
+			if ret.Cmd == "client-connect" {
 				gdk.ThreadsEnter()
 				lyt.EditBuffer.SetText(ret.Payload)
 				gdk.ThreadsLeave()
 			}
 		} else if read != nil {
-			
+
 			switch read.Cmd {
 			case "success":
 				log.Println("success")
