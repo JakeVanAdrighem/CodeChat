@@ -1,3 +1,7 @@
+// layout.go: Code for GTK layouts, used in gtkclient.go
+// By: Graham Greving, David Taylor, Jake VanAdrighem
+// CMPS 112: Final Project - CodeChat
+
 package layout
 
 import (
@@ -18,7 +22,7 @@ import (
  * scrolledwindow   |		scrolledwindow  chatHBox
  *	|				|			 |			|		|
  * editorEntry  editorStatus 	chat	msgentry	sendbtn
- * 	
+ *
  */
 
 type Layout struct {
@@ -93,17 +97,17 @@ func (lyt *Layout) Init() {
 	lyt.EditView.ModifyFontEasy("Monospace 8")
 	lyt.EditStatusBar = gtk.NewStatusbar()
 	lyt.editWindow.Add(lyt.EditView)
-	
+
 	lyt.leftVBox.PackStart(lyt.editWindow, true, true, 1)
 	lyt.leftVBox.PackEnd(lyt.EditStatusBar, false, false, 2)
-	
+
 	lyt.leftFrame.Add(lyt.leftVBox)
 
 	// build up the right side
 	lyt.chatWindow = gtk.NewScrolledWindow(nil,nil)
 	lyt.chatWindow.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	lyt.chatWindow.SetShadowType(gtk.SHADOW_IN)
-	
+
 	lyt.chatTagTable = gtk.NewTextTagTable()
 	lyt.ChatBuffer = gtk.NewTextBuffer(lyt.chatTagTable)
 	lyt.ChatView = gtk.NewTextViewWithBuffer(*lyt.ChatBuffer)
@@ -114,23 +118,23 @@ func (lyt *Layout) Init() {
 	lyt.MessageBuffer = gtk.NewEntryBuffer("")
 	lyt.ChatEntry = gtk.NewEntryWithBuffer(lyt.MessageBuffer)
 	lyt.SendBtn = gtk.NewButtonWithLabel("send")
-	
+
 	lyt.chatHBox.PackStart(lyt.ChatEntry, true, true, 0)
 	lyt.chatHBox.PackEnd(lyt.SendBtn, false, false, 0)
-	
+
 	lyt.rightVBox.PackStart(lyt.chatWindow, true, true, 1)
 	lyt.rightVBox.PackStart(lyt.chatHBox, false, false, 0)
-	
+
 	lyt.rightFrame.Add(lyt.rightVBox)
-	
+
 	lyt.leftEvent.Add(lyt.leftFrame)
 	lyt.rightEvent.Add(lyt.rightFrame)
-	
+
 	// set up interface + layout
-	lyt.mainBox.PackStart(lyt.leftEvent, true, true, 0)	
+	lyt.mainBox.PackStart(lyt.leftEvent, true, true, 0)
 
 	lyt.mainBox.PackStart(lyt.rightEvent, true, true, 0)
-	
+
 	// Show the window
 	lyt.win.Add(lyt.mainBox)
 	lyt.win.SetSizeRequest(800, 400)

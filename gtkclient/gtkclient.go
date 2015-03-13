@@ -1,3 +1,11 @@
+// gtkclient.go: main source file for the client
+// Uses the client.go library to implement mesage handline, and
+// layout.go for the gtk stuff. The code outsources most heavy
+// lifting to these two libraries, being mostly command and control.
+
+// By: Graham Greving, David Taylor, Jake VanAdrighem
+// CMPS 112: Final Project - CodeChat
+
 package main
 
 import (
@@ -11,6 +19,9 @@ import (
 
 var WriteLock sync.Mutex
 
+// Function to read information from the server
+// Runs in a gothread, reading from the server and updating
+// the GUI as necessary
 func doRead(client *codechat.Client, lyt *layout.Layout) {
 	for {
 		ret, read, err := client.Read()
@@ -23,17 +34,17 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 		// check if there is a returnstatus
 		if ret != nil {
 			//log.Println("got a return:", ret.Cmd, ret.Status, ret.Payload)
-			if ret.Cmd == "client-connect" {	
+			if ret.Cmd == "client-connect" {
 				gdk.ThreadsEnter()
 				lyt.EditBuffer.SetText(ret.Payload)
 				gdk.ThreadsLeave()
 			}
 		} else if read != nil {
-			
+
 			switch read.Cmd {
 			case "success":
 				log.Println("success")
-				// if success is from a connect, update our file 
+				// if success is from a connect, update our file
 			case "message":
 				buffer := lyt.ChatBuffer
 				var end gtk.TextIter
@@ -63,6 +74,7 @@ func doRead(client *codechat.Client, lyt *layout.Layout) {
 	}
 }
 
+// messageAction: functionality for sending messages
 func messageAction(client *codechat.Client, lyt *layout.Layout) {
 	msg := lyt.MessageBuffer.GetText()
 	println("button clicked: ", msg)
@@ -94,7 +106,7 @@ func main() {
 		messageAction(client, lyt)
 	})
 	// User has entered some text in the editor window
-	// send update-file 
+	// send update-file
 	lyt.EditBuffer.Connect("end-user-action", func() {
 		WriteLock.Lock()
 		var start, end gtk.TextIter
@@ -109,11 +121,12 @@ func main() {
 	})
 
 	// Connect the client
+	// Insults you if you don't specify a username
 	name, ipport = layout.PromptUsername()
 	if name == "" {
 		name = "dumbass"
 	}
-	// connect locally if there is no 
+	// connect locally if there is no specified port
 	if ipport == "" {
 		ipport = "127.0.0.1:8080"
 	}

@@ -1,4 +1,4 @@
-// server.go
+// server.go: source code for the CodeChat server
 // Authors: Graham Greving, David Taylor, Jake VanAdrighem
 // CMPS 112: Final Project - CodeChat
 
@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-// Server datatype
+// Server datatype representing information for a server
 type Server struct {
 	clients    map[net.Conn]*Client
 	numClients int
@@ -23,15 +23,20 @@ type Server struct {
 	write      sync.Mutex
 }
 
-// Client datatype
+// Client datatype used to identify a client
+// Includes a reference to the parent server, the network connection
+// for the client, the user name, and a channel for communicating
+// between the client and the server
 type Client struct {
 	server     *Server
 	conn       net.Conn
 	name       string
-	clientChan chan string
+	clientChan chan string // Might be deprecated
 }
 
 // internal message passing struct for IPC
+// the message contains both the message to be propagated and the
+// server's response to the sender.
 type message struct {
 	client   Client
 	msg      OutgoingMessage
@@ -55,6 +60,9 @@ type OutgoingMessage struct {
 	Payload string `json:"payload"`
 }
 
+// write: writes the message to be sent from server to client
+// Marshals the OutgoingMessage into a JSON message and
+// sends over the given connection
 func (msg OutgoingMessage) write(conn net.Conn) error {
 	log.Println("writing a outgoing message to", conn.RemoteAddr().String())
 	b, err := json.Marshal(msg)
@@ -70,6 +78,7 @@ func (msg OutgoingMessage) write(conn net.Conn) error {
 	return err
 }
 
+// Same as above for client responses
 func (res ClientResponse) write(conn net.Conn) error {
 	log.Println("writing a client response to", conn.RemoteAddr().String())
 	b, err := json.Marshal(res)
@@ -83,6 +92,8 @@ func (res ClientResponse) write(conn net.Conn) error {
 	return err
 }
 
+// Broadcast: Runs on a thread, propagate messages to the cliens,
+// the response to the sender and the outgoing message to the others
 func (serv *Server) broadcast() {
 	// loop on incoming messages from the server's chan
 	for toBroadcast := range serv.serverChan {
@@ -118,6 +129,7 @@ func checkErr(e error) bool {
 	return false
 }
 
+// getClients: gets a list of client names. Useful for future additions
 func (serv *Server) getClients(conn net.Conn) (string, error) {
 	// Builds an array of names, as well as comma separated string
 	// just in case we'll need it later
@@ -132,6 +144,11 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
+// parseCommand: Parses a command from the client.
+// Decodes JSON messages from the client, performs the specified action,
+// and generates an appropriate message and returns it. Runs in the
+// handle connection thread for a client, parsing commands as they
+// come in
 func (client *Client) parseCommand(dec *json.Decoder, serv *Server) (message, error) {
 	var m message
 	var e error
