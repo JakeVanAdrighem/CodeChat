@@ -132,7 +132,7 @@ class Layout:
                 input = self.ChatEntry.get_text()
                 if input in ('','\n'):
                         return
-                self.conclient.Write('message',input)
+                self.conclient.Write("message",input)
                 print("message Action:" + input)
                 self.ChatEntry.set_text('')
                 self.ChatBuffer.insert(self.ChatBuffer.get_end_iter(),self.username + ": " + input + '\n')
