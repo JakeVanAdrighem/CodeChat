@@ -132,7 +132,7 @@ func (serv *Server) getClients(conn net.Conn) (string, error) {
 	return nameStr, nil
 }
 
-func (client *Client) doCommands(dec *json.Decoder, serv *Server) (message, error) {
+func (client *Client) parseCommand(dec *json.Decoder, serv *Server) (message, error) {
 	var m message
 	var e error
 	var msg string
@@ -225,7 +225,7 @@ func handleConnection(conn net.Conn, serv *Server) {
 	// Create the JSON decoder
 	dec := json.NewDecoder(conn)
 	for {
-		m, err := user.doCommands(dec, serv)
+		m, err := user.parseCommand(dec, serv)
 		serv.serverChan <- m
 		if m.exitflag || err != nil {
 			// write back to clients

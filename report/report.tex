@@ -91,11 +91,29 @@ servers do), when it receives a connection, it spawns a separate ``goroutine''
 (a lightweight thread) to handle this connections commands, then continues 
 listening for more connections.
 
-Writing back to clients is handled in a single goroutine which is executed 
-before any incoming connections are established. This thread reads on an 
-internal channel.
+Each connection is handled by a separate goroutine, and is encapsulated in a 
+Client data-type, which keeps track of each connected client's username, 
+connection handle, and the associated server. The goroutine listens for 
+incoming data on the connection, then proceeds to parse a command from the 
+JSON data. As it parses the command, it builds up an IPC message type 
+containing an error code, a response type to be written back to this client, 
+and a response type to be written back to the other clients. When the command 
+has been parsed, this IPC message is then sent through a channel to the 
+broadcast goroutine, which writes back the appropriate JSON to each client.
+
+Writing back to clients is handled in a single goroutine (broadcast) which is 
+established before any incoming connections are connected. This thread reads 
+on an internal channel, which is written to by each client thread. When it 
+gets an IPC message, it writes the returnstatus to the requesting client, and 
+the response to the other clients.
 
 \subsection*{Client}
+
+The client essentially takes user input, serializes it into a JSON command 
+and writes it to the server. In the Go implementation, we were able to 
+encapsulate the client as a nice little library, exporting the 
+Connect(username, port), Write(command, payload), Read() functions, as well 
+as types for Client, and Messages.
 
 \section*{Languages}
 
