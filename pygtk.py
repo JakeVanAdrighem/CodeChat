@@ -9,12 +9,13 @@ import pango
 import gobject
 import gtk
 
+import client
+
 def win_quit():
 	print("peace out!")
 	gtk.MainQuit()
 
 class Layout:
-
 	def __init__(self):
 		win = gtk.Window()
 		win.set_position(gtk.WIN_POS_CENTER)
@@ -95,17 +96,66 @@ class Layout:
 		win.set_size_request(800, 400)
 		win.show_all()
 
-	def messageAction():
-		print("message Action:")
+                self.conclient = client.ConnectionClient()
+                
+                #we need to query the user for username and connection info
+                self.dialog = gtk.Dialog("Connection Dialog",win,gtk.DIALOG_MODAL)
+                ulabel = gtk.Label("username")
+                ilabel = gtk.Label("IP Address:Port")
+                self.uentry = gtk.Entry()
+                self.ientry = gtk.Entry()
+                self.dialog.vbox.add(ulabel)
+                self.dialog.vbox.add(self.uentry)
+                self.dialog.vbox.add(ilabel)
+                self.dialog.vbox.add(self.ientry)
+                self.button = self.dialog.add_button("connect",gtk.RESPONSE_OK)
+                self.button.connect("clicked",self.connect)
+                self.ientry.connect("activate",self.connect)
+                #self.dialog.response(self.connect)
+                self.dialog.show_all()
+                response = self.dialog.run()
+
+
+        def connect(self, whatisthis):
+                #we have to include the username as a member
+                #only because we post messages locally and
+                #need our own name
+                self.username = self.uentry.get_text()
+                ip       = self.ientry.get_text()
+                ip,port = ip.split(':')
+                #convert from string before sending
+                #port = int(port)
+                self.dialog.destroy()
+                self.conclient.Connect(self.username,ip,port)
+
+	def messageAction(self, whatisthis):
+                input = self.ChatEntry.get_text()
+                if input in ('','\n'):
+                        return
+                self.conclient.Write("message",input)
+                print("message Action:" + input)
+                self.ChatEntry.set_text('')
+                self.ChatBuffer.insert(self.ChatBuffer.get_end_iter(),self.username + ": " + input + '\n')
+                
+
+        def editorAction(self, whatisthis):
+                #WriteLock.lock()
+                ctx = self.EditStatusBar.get_context_id("CodeChat")
+                self.EditStatusBar.pop(ctx)
+                self.EditStatusBar.push(ctx, "last edited by you")
+                start = self.EditStatusBar.get_start_iter()
+                end   = self.EditStatusBar.get_end_iter()
+                data  = self.EditBuffer.get_text(start, end, True)
+                self.conclient.Write("update-file", data)
+                #WriteLock.unlock()
 
 def main():
 	lyt = Layout()
-
 	lyt.SendBtn.connect("clicked", lyt.messageAction)
+        lyt.ChatEntry.connect("activate", lyt.messageAction)
+        #deal with write locking before enabling this
+        #lyt.EditBuffer.connect("end-user-action", lyt.editorAction)
 
-	#lyt.ChatEntry.Connect("activate", func () {
-		#messageAction(client, lyt)
-	#})
 
 	#// User has entered some text in the editor window
 	#// send update-file 
@@ -124,8 +174,8 @@ def main():
 
 	# need to:
 	# [] connect to the server
-	# [] connect event handlers
-	# [] create startup dialog
+	# [x] connect event handlers
+	# [x] create startup dialog
 	# [] quit gracefully
 	gtk.main()
 
