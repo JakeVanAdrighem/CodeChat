@@ -20,3 +20,4 @@ clientTest/clientTest
 report/report.pdf
 *.bak
 *.synctex.gz
+*.bat
