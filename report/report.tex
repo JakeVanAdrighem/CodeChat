@@ -32,7 +32,8 @@ would be reflected in real-time, and can be discussed using an IM platform.
 Ideally, this functionality would be in a unified platform, so these 
 activities can be done seamlessly. This desire led to the idea of CodeChat.
 
-% Languages intro When planning the project, we were faced with the choice of 
+% Languages intro
+When planning the project, we were faced with the choice of 
 which programming language(s) to use. We wanted to use a language with good 
 networking support and a good concurrency model. We also wanted a language 
 that is simple and intuitively clear, even if that meant that the code was 
@@ -104,7 +105,7 @@ broadcast goroutine, which writes back the appropriate JSON to each client.
 Writing back to clients is handled in a single goroutine (broadcast) which is 
 established before any incoming connections are connected. This thread reads 
 on an internal channel, which is written to by each client thread. When it 
-gets an IPC message, it writes the returnstatus to the requesting client, and 
+gets an IPC message, it writes the return status to the requesting client, and 
 the response to the other clients.
 
 \subsection*{Client}
