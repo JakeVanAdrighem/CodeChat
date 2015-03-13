@@ -18,3 +18,5 @@ clientTest/clientTest
 *.log
 *.out
 report/report.pdf
+*.bak
+*.synctex.gz
