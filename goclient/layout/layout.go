@@ -4,7 +4,7 @@ import (
 	"github.com/mattn/go-gtk/gtk"
 	"github.com/mattn/go-gtk/glib"
     // gramasaurous
-	gtksource "github.com/gramasaurous/go-gtk/gtksourceview"
+	gtksource "github.com/mattn/go-gtk/gtksourceview"
 	//"fmt"
 )
 /*
