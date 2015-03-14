@@ -137,7 +137,36 @@ different threads, since GTK is not thread-safe. GTK provides a set of
 functions for protecting against data races and invalidated references,
 \verb+gdk_threads_enter()+ and \verb+gdk_threads_exit()+.
 
-The graphics library we used was the Gimp ToolKit (GTK).
+\subsubsection*{GUI}
+
+The graphics library we used was the Gimp ToolKit (GTK), we used 
+version 2, because this was the version supported by the language 
+bindings library for go, go-gtk, as well as the version supported by 
+the language bindings library for Python, pygtk. This toolkit is very 
+thourough and provides an excellent API and is fairly well documented. 
+Go-gtk, however, is a thin wrapper for go around GTK's C API, and 
+little documentation is provided, as it follows the API very closely. 
+This was painful at times, because we had to delve into the source code 
+in order to see which functionality from the original API was 
+supported. We ended up actually contributing a few commits to the 
+github for go-gtk in order to get some extra functionality we required. 
+Pygtk is similarly a wrapper around the original C API, but provides 
+better documentation. However, setting up the environment was more 
+painful than for go. Due to the closeness of these bindings to the 
+original API, converting the go-gtk code to pygtk was nearly as simple 
+as converting CamelCase to snake\_case.
+
+One part of the client we expected to be more difficult was the text 
+editor, particularly implementing the editor-comforts such as 
+syntax-highlighting, line numbers, monospace fonts, and 
+bracket-matching. To our pleasant surprise, GTK provides an excellent 
+library for source-code editing interfaces, called GTKSourceView. GTK 
+based Text-editors such as Gedit and Geany make use of this library, so 
+in theory, our editor can eventually be as fully featured as these 
+editors (even providing compatibility with their extensive plugins). 
+This library made implementing these nice features as simple as making 
+the correct GTK function calls (and implementing them in the go-gtk 
+library).
 
 \section*{Languages}
 
@@ -216,7 +245,11 @@ share memory by communicating, than to communicate by sharing memory."
 From this comes the idea of goroutines and channels. Goroutines, a pun 
 on coroutine, are lightweight threads built in to the language. 
 Channels are essentially safe, concurrent, blocking buffers which 
-facilitate communication across goroutines.
+facilitate communication across goroutines. In the server, we used 
+goroutines to handle each connection to the server, and a broadcasting
+goroutine which handles writing back to each connection. This ensures
+that reads on any given client only occurs in one thread, and writes to
+all clients only occur on a single thread.
 
 % Discuss language features here
 
@@ -239,7 +272,7 @@ different parameters:
 \begin{itemize}
 	\item Length of payload (message or file)
 	\item Number of idle clients connected to the server
-	\iteme Number of active clients connected to the server
+	\item Number of active clients connected to the server
 \end{itemize}
 
 Thankfully the nice client module we provided in go (abstracting the 
