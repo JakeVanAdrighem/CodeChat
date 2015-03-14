@@ -1,12 +1,7 @@
 CodeChat Todo List
 
-1. [x] write back JSON to clients (server.go)
-2. [x] clean up/refactor server.go
-3. [x] implement text editor commands
-4. [x] debug client-server communications
-
-5. [x] work on the go client
-6. [x] have client parse JSON
+Server:
+[] benchmarks
 
 
 GTKClient:
