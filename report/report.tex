@@ -135,7 +135,7 @@ appropriate parts of the interface. Care had to be taken when reading
 from and writing to the interface, especially when operating in
 different threads, since GTK is not thread-safe. GTK provides a set of
 functions for protecting against data races and invalidated references,
-$gdk_threads_enter()$ and $gdk_threads_exit()$.
+\verb+gdk_threads_enter()+ and \verb+gdk_threads_exit()+.
 
 \section*{Languages}
 
@@ -166,6 +166,55 @@ Go in several areas.
 \subsection*{Go}
 
 % Briefly introduce golang here
+
+Go is an interesting new language developed at Google in 2009. It was 
+originally touted as a new systems language to compete with C or C++, 
+but the project has since avoided using this term. Go is statically 
+typed, and ahead of time compiled directly to hardware. It also 
+features a garbage collector, type safety, and a some dynamic-typing 
+(type inferrence). As a modern language, it offers a robust standard 
+library, excellent documentation, and an array of various 
+language-support tools including the \verb+go-build+ build system, 
+\verb+go-doc+ automatic documentation creation, and \verb+go-fmt+ 
+automatic code formatter to the style guidelines. While it lacks a 
+discrete package management system, such as Haskell's cabal or Node's 
+npm, it provides a remote import tool, which, combined with the vast 
+amount of projects on github, is just as useful (if not more). 
+Additionally, since go is a performance-oriented language in the modern 
+computing world, and is geared towards scalable systems software, it 
+provides an interesting concurrency model and IPC primitives.
+
+The go language is built around sound programming practices, and helps 
+enforce or encourage these at any stage possible. The extensive guide 
+``Effective Go" helps programmers understand and write `idiomatic go.' 
+Somewhat annoyingly, go forces or encourages many of the sides fierce 
+`style-debates' of C-style languages. For example, the debate on where 
+to place block-starting curly braces is killed by forcing opening 
+braces to be the last character on the previous line (if starting a new 
+block). In this sense, the language has a much more restrictive syntax. 
+The tabs-spaces debate is solved by the \verb+go-fmt+ tool, which 
+automatically formats any go code to the language's preferred 
+style-guide. Other stylistic choices and conventions are enforced by 
+the language: any capitalized variables, functions, or structs are 
+exported. There is no public or private keyword, simply a stylistic 
+syntax defining whether or not something is visible outside the scope 
+of the program. While these choices can seem irking and restrictive, 
+they do serve an excellent goal --- ensuring a uniform code style 
+across any program and facilitating both readability and coherence. It 
+says something about the language that it would be difficult to have an 
+``Obfuscated Go Contest." One of go's language design goals was the 
+principle that ``50 lines of clear, understandable, well documented 
+code, is better than 10 lines of clever, confusing code." This isn't to 
+say that go is verbose, but rather it is coherent and easily 
+understandable.
+
+Stylistic points aside, go provides an excellent model for handling 
+concurrency, which is best summed up by the phrase ``it is better to 
+share memory by communicating, than to communicate by sharing memory." 
+From this comes the idea of goroutines and channels. Goroutines, a pun 
+on coroutine, are lightweight threads built in to the language. 
+Channels are essentially safe, concurrent, blocking buffers which 
+facilitate communication across goroutines.
 
 % Discuss language features here
 
