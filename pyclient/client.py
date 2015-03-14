@@ -32,25 +32,31 @@ class ConnectionClient():
         self.port = int(port)
         self.con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            ret = self.con.connect_ex((self.ip,self.port))
+		ret = self.con.connect_ex((self.ip,self.port))
+		sendMsg = json.dumps({'cmd':"connect", 'username':self.username})
+		self.con.sendall(sendMsg)
         except:
-            #return 1 to indicate failure
-            return 1
+		#return 1 to indicate failure
+		return 1
         return ret
 
-    def Close(self):
+    def Close(self, reason):
+        self.Write("exit", reason)
         self.con.close()
         
     def Read(self):
         if not self.con:
             return()
-        data = self.con.recv()
-        if json.dumps(data):
-            return data
-
+        data = self.con.recv(4096)
+        if json.loads(data):
+		return json.loads(data)
+	else:
+		print("bad data")
 
     def Write(self, cmd, data):
         if not self.con or not data:
             return()
-        sendMsg = json.dumps({'cmd':cmd, 'payload':data, 'from':self.username})
+        print("ConnectionClient.Write: " + self.username + "," + data + "," + cmd + ".")
+        sendMsg = json.dumps({'cmd':cmd, 'msg':data})
+	print(sendMsg)
         self.con.sendall(sendMsg)

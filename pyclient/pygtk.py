@@ -120,33 +120,43 @@ class Layout:
                 
                 #instantiate read thread
                 self.read_thread = threading.Thread(None, self.doRead, 'read_thread')
+                self.read_thread.start()
 
 
         def doRead(self):
                 #eventually implement it so that we
                 #update less frequently when we're editing
                 #if not self.editing:
-                res = self.conclient.Read()
-                if res:
-                        gtk.gdk.threads_enter()
-                        cmd = res["cmd"]
-                        if cmd == "update-file":
-                                ctx = self.EditStatusBar.get_context_id("CodeChat")
-                                self.EditStatusBar.pop(ctx)
-                                self.EditStatusBar.push(ctx, "last edited by " + res["from"])
-                                self.EditBuffer.SetText(res["payload"])
-                        elif cmd   == "client-connect":
-                                endIter = self.ChatBuffer.get_end_iter()
-                                self.ChatBuffer.insert(endIter,res["from"] + " has entered.\n")
-                        #elif cmd == "success":
-                                #successful connection
-                        elif cmd == "client-exit":
-                                endIter = self.ChatBuffer.get_end_iter()
-                                self.ChatBuffer.insert(endIter,res["from"] + " has quit (" + res["payload"] + ")\n")
-                        #pause thread for a quarter second
-                        #time.sleep(0.25)
-                        gtk.gdk.threads_exit()
-                        doRead()
+                print( "in doRead thread")
+                while True:
+			res = self.conclient.Read()
+			print ("got message" + res)
+			if res:
+				#gtk.gdk.threads_enter()
+				try:
+					cmd = res["cmd"]
+				except:
+					cmd = "none"
+				if cmd == "return-status":
+					print("return status")
+				if cmd == "update-file":
+					ctx = self.EditStatusBar.get_context_id("CodeChat")
+					self.EditStatusBar.pop(ctx)
+					self.EditStatusBar.push(ctx, "last edited by " + res["from"])
+					self.EditBuffer.SetText(res["payload"])
+				elif cmd   == "client-connect":
+					endIter = self.ChatBuffer.get_end_iter()
+					self.ChatBuffer.insert(endIter,res["from"] + " has entered.\n")
+				#elif cmd == "success":
+					#successful connection
+				elif cmd == "client-exit":
+					endIter = self.ChatBuffer.get_end_iter()
+					self.ChatBuffer.insert(endIter,res["from"] + " has quit (" + res["payload"] + ")\n")
+				elif cmd == "none":
+					print("weird shit happened")
+				#pause thread for a quarter second
+				#time.sleep(0.25)
+				#gtk.gdk.threads_exit()
 
         def connect(self, whatisthis):
                 #we have to include the username as a member
@@ -161,6 +171,7 @@ class Layout:
                         print("IP and Port bad formatting or not provided")
                         return
                 res = self.conclient.Connect(self.username,ip,port)
+                self.conclient.Write("connect","username")
                 #res will be 0 if it's a successful connection
                 if res:
                         return
@@ -170,11 +181,10 @@ class Layout:
                 input = self.ChatEntry.get_text()
                 if input in ('','\n'):
                         return
-                self.conclient.Write("message",input)
+                self.conclient.Write("msg",input)
                 print("message Action:" + input)
                 self.ChatEntry.set_text('')
                 self.ChatBuffer.insert(self.ChatBuffer.get_end_iter(),self.username + ": " + input + '\n')
-                
 
         def editorAction(self, whatisthis):
                 ctx = self.EditStatusBar.get_context_id("CodeChat")
