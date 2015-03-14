@@ -47,9 +47,11 @@ class ConnectionClient():
     def Read(self):
         if not self.con:
             return()
-        data = self.con.recv()
-        if json.dumps(data):
-            return data
+        data = self.con.recv(4096)
+        if json.loads(data):
+		return json.loads(data)
+	else:
+		print("bad data")
 
     def Write(self, cmd, data):
         if not self.con or not data:

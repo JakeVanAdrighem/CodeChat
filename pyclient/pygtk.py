@@ -120,6 +120,7 @@ class Layout:
                 
                 #instantiate read thread
                 self.read_thread = threading.Thread(None, self.doRead, 'read_thread')
+                self.read_thread.start()
 
 
         def doRead(self):
@@ -127,12 +128,17 @@ class Layout:
                 #update less frequently when we're editing
                 #if not self.editing:
                 print( "in doRead thread")
-                while true:
+                while True:
 			res = self.conclient.Read()
 			print ("got message" + res)
 			if res:
-				gtk.gdk.threads_enter()
-				cmd = res["cmd"]
+				#gtk.gdk.threads_enter()
+				try:
+					cmd = res["cmd"]
+				except:
+					cmd = "none"
+				if cmd == "return-status":
+					print("return status")
 				if cmd == "update-file":
 					ctx = self.EditStatusBar.get_context_id("CodeChat")
 					self.EditStatusBar.pop(ctx)
@@ -146,9 +152,11 @@ class Layout:
 				elif cmd == "client-exit":
 					endIter = self.ChatBuffer.get_end_iter()
 					self.ChatBuffer.insert(endIter,res["from"] + " has quit (" + res["payload"] + ")\n")
+				elif cmd == "none":
+					print("weird shit happened")
 				#pause thread for a quarter second
 				#time.sleep(0.25)
-				gtk.gdk.threads_exit()
+				#gtk.gdk.threads_exit()
 
         def connect(self, whatisthis):
                 #we have to include the username as a member
