@@ -7,11 +7,12 @@
 % Jake VanAdrighem
 % jvanadri@ucsc.edu
 
-\documentclass[10pt, letterpaper]{article}
+\documentclass[12pt, letterpaper]{article}
 
 \usepackage{fullpage}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{units}
 
 \title{CodeChat}
 \author{Graham Greving \\ David Taylor \\ Jake VanAdrighem}
@@ -24,9 +25,9 @@
 
 % Project intro
 
-CodeChat is a collaborative source-code editing environment.The project
+CodeChat is a collaborative source-code editing environment. The project
 arose from the need to share code over IRC channels while working on
-group projects. Group projects require frequent working session.
+group projects. Group projects require frequent working sessions.
 However, an academic setting often times means a lack of a shared
 workspace and working hours, as is the case in an office environment.
 This results in a need to have tools to enable remote collaboration.
@@ -78,9 +79,9 @@ support collaborative text editing, any client can simply implement a
 chat program with the same server, and ignore any unsupported commands
 from the server. Very cool.
 
-To achieve language-agnosticism, we implemented a JSON protocol. We
-chose JSON because it is quickly (if not already) becoming a standard
-in server communications and most languages include libraries and
+To achieve language-agnosticism, we implemented a messaging protocol using
+JSON. We chose JSON because it is quickly (if not already) becoming a
+standard in server communications and most languages include libraries and
 packages for creating JSON objects. Additionally, since JSON is simply
 text, it can be very easily written to web sockets/connections in any
 language. I mentioned earlier the trade-offs, this is because when you
@@ -143,7 +144,7 @@ The graphics library we used was the Gimp ToolKit (GTK), we used
 version 2, because this was the version supported by the language 
 bindings library for go, go-gtk, as well as the version supported by 
 the language bindings library for Python, pygtk. This toolkit is very 
-thourough and provides an excellent API and is fairly well documented. 
+thorough and provides an excellent API and is fairly well documented. 
 Go-gtk, however, is a thin wrapper for go around GTK's C API, and 
 little documentation is provided, as it follows the API very closely. 
 This was painful at times, because we had to delve into the source code 
@@ -158,7 +159,7 @@ as converting CamelCase to snake\_case.
 
 One part of the client we expected to be more difficult was the text 
 editor, particularly implementing the editor-comforts such as 
-syntax-highlighting, line numbers, monospace fonts, and 
+syntax-highlighting, line numbers, monospaced fonts, and 
 bracket-matching. To our pleasant surprise, GTK provides an excellent 
 library for source-code editing interfaces, called GTKSourceView. GTK 
 based Text-editors such as Gedit and Geany make use of this library, so 
@@ -183,7 +184,7 @@ decided that a language with poor performance would be unsuitable.
 Additionally, we decided we needed a language with a good concurrency
 model. As the server portion of CodeChat would be interfacing with
 multiple clients, and each client would have portions operating
-independantly, the decision to have multi-threaded code came easy, and
+independently, the decision to have multi-threaded code came easy, and
 we wanted a language with good native support for that. Finally, we
 decided that we would prefer a language with intuitive clarity, even if
 that came at the cost of brevity. Our reasoning here was that writing
@@ -203,22 +204,22 @@ originally touted as a new systems language to compete with C or C++,
 but the project has since avoided using this term. Go is statically 
 typed, and ahead of time compiled directly to hardware. It also 
 features a garbage collector, type safety, and a some dynamic-typing 
-(type inferrence). As a modern language, it offers a robust standard 
+(type inference). As a modern language, it offers a robust standard 
 library, excellent documentation, and an array of various 
 language-support tools including the \verb+go-build+ build system, 
 \verb+go-doc+ automatic documentation creation, and \verb+go-fmt+ 
 automatic code formatter to the style guidelines. While it lacks a 
 discrete package management system, such as Haskell's cabal or Node's 
 npm, it provides a remote import tool, which, combined with the vast 
-amount of projects on github, is just as useful (if not more). 
+amount of projects on Github, is just as useful (if not more). 
 Additionally, since go is a performance-oriented language in the modern 
 computing world, and is geared towards scalable systems software, it 
 provides an interesting concurrency model and IPC primitives.
 
-The go language is built around sound programming practices, and helps 
+The Go language is built around sound programming practices, and helps 
 enforce or encourage these at any stage possible. The extensive guide 
-``Effective Go" helps programmers understand and write `idiomatic go.' 
-Somewhat annoyingly, go forces or encourages many of the sides fierce 
+``Effective Go" helps programmers understand and write `idiomatic Go.' 
+Somewhat annoyingly, Go forces or encourages many of the sides fierce 
 `style-debates' of C-style languages. For example, the debate on where 
 to place block-starting curly braces is killed by forcing opening 
 braces to be the last character on the previous line (if starting a new 
@@ -233,7 +234,7 @@ of the program. While these choices can seem irking and restrictive,
 they do serve an excellent goal --- ensuring a uniform code style 
 across any program and facilitating both readability and coherence. It 
 says something about the language that it would be difficult to have an 
-``Obfuscated Go Contest." One of go's language design goals was the 
+``Obfuscated Go Contest." One of Go's language design goals was the 
 principle that ``50 lines of clear, understandable, well documented 
 code, is better than 10 lines of clever, confusing code." This isn't to 
 say that go is verbose, but rather it is coherent and easily
@@ -251,7 +252,6 @@ goroutine which handles writing back to each connection. This ensures
 that reads on any given client only occurs in one thread, and writes to
 all clients only occur on a single thread.
 
-% Discuss language features here
 
 \subsection*{Python}
 
@@ -261,8 +261,11 @@ all clients only occur on a single thread.
 
 \section*{Testing}
 
-Simple stress tests performed on the server yielded around 100 
-messges/second across a network, and around 500 messages/second on a 
+Simple stress tests performed on the server yielded around
+$\unitfrac[100]{messages}{second}$ 
+across a network, and around
+$\unitfrac[500]{messages}{second}$
+on a 
 local instance. These tests simply monitored the ability of the server 
 to handle a single command and write back to the client. No other 
 clients were connected to the server. Ideally the tests would be 
@@ -278,7 +281,7 @@ different parameters:
 Thankfully the nice client module we provided in go (abstracting the 
 client-server communications from the GUI client), provide an excellent 
 platform for writing this test suite. The results of these tests can be 
-used to identify weakpoints in both the client library and the server 
+used to identify weak points in both the client library and the server 
 code.
 
 For now, we are satisfied with the current performance of the server, 
@@ -293,11 +296,11 @@ is obvious right off the bat is increasing the granularity on the
 updates of the code-editor. In the current implementation, the entire 
 file-buffer is yanked and sent to the server. While this may seem 
 inefficient, it actually solved our multiple-writers problem, which was 
-one of our original main concerns. Since every time a client recieves a 
+one of our original main concerns. Since every time a client receives a 
 new file, it simply replaces the contents of the file-buffer with the 
 new file, we never have the problem of having more than one writer. 
 This, of course is both inefficient and doesn't optimize collaboration, 
-since everytime the file is updated, the users cursor position is lost. 
+since every time the file is updated, the users cursor position is lost. 
 This problem can easily be solved by fine-graining the updates, for 
 example, sending a single line at a time, whenever it is modified. 
 While increasing efficiency, it also increases complexity and enhanced 
