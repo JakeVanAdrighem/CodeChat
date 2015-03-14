@@ -240,6 +240,23 @@ code, is better than 10 lines of clever, confusing code." This isn't to
 say that go is verbose, but rather it is coherent and easily
 understandable.
 
+One part of this philosophy is the enforcing of strict error checking.
+In the Go compilation process, any use of the language that would
+constitute a warning halts the compilation process. In this way, the
+Go compiler forces the user to conform to the clean style Go espouses.
+However, this feature is a double edged sword. Any identifier declared
+but not used constitutes a warning, and thus stops compilation. While
+this might not seem like a terrible feature, this rule also applies to
+libraries, meaning that library imports have to be modified when a
+function isn't used. The end result of this was frequent failed
+compilation when testing new features, as we would make declarations
+with the intention of implementing them at a later date. However,
+this stylistic enforcement helped in code organization by ensuring
+no stone was unturned in the implementation. This differed from the
+Python implementation, where we overlooked certain things in
+development, which would eventually cause debugging issues down the
+line. 
+
 Stylistic points aside, go provides an excellent model for handling 
 concurrency, which is best summed up by the phrase ``it is better to 
 share memory by communicating, than to communicate by sharing memory." 
