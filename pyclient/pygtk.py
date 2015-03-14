@@ -9,11 +9,14 @@ import pango
 import gobject
 import gtk
 
+import threading
+import time
+
 import client
 
-def win_quit():
+def win_quit(whatisthis):
 	print("peace out!")
-	gtk.MainQuit()
+	gtk.main_quit()
 
 class Layout:
 	def __init__(self):
@@ -114,7 +117,34 @@ class Layout:
                 #self.dialog.response(self.connect)
                 self.dialog.show_all()
                 response = self.dialog.run()
+                
+                #instantiate read thread
+                self.read_thread = threading.Thread(None, self.doRead, 'read_thread')
 
+
+        def doRead(self):
+                #eventually implement it so that we
+                #update less frequently when we're editing
+                #if not self.editing:
+                res = self.conclient.Read()
+                if res:
+                        cmd = res["cmd"]
+                        if cmd == "update-file":
+                                ctx = self.EditStatusBar.get_context_id("CodeChat")
+                                self.EditStatusBar.pop(ctx)
+                                self.EditStatusBar.push(ctx, "last edited by " + res["from"])
+                                self.EditBuffer.SetText(res["payload"])
+                        elif cmd   == "client-connect":
+                                endIter = self.ChatBuffer.get_end_iter()
+                                self.ChatBuffer.insert(endIter,res["from"] + " has entered.\n")
+                        #elif cmd == "success":
+                                #successful connection
+                        elif cmd == "client-exit":
+                                endIter = self.ChatBuffer.get_end_iter()
+                                self.ChatBuffer.insert(endIter,res["from"] + " has quit (" + res["payload"] + ")\n")
+                        #pause thread for a quarter second
+                        #time.sleep(0.25)
+                        doRead()
 
         def connect(self, whatisthis):
                 #we have to include the username as a member
@@ -122,11 +152,17 @@ class Layout:
                 #need our own name
                 self.username = self.uentry.get_text()
                 ip       = self.ientry.get_text()
-                ip,port = ip.split(':')
-                #convert from string before sending
-                #port = int(port)
+                #don't destroy the dialog if they don't provide proper connection info
+                try:
+                        ip,port = ip.split(':')
+                except:
+                        print("IP and Port bad formatting or not provided")
+                        return
+                res = self.conclient.Connect(self.username,ip,port)
+                #res will be 0 if it's a successful connection
+                if res:
+                        return
                 self.dialog.destroy()
-                self.conclient.Connect(self.username,ip,port)
 
 	def messageAction(self, whatisthis):
                 input = self.ChatEntry.get_text()
@@ -139,7 +175,6 @@ class Layout:
                 
 
         def editorAction(self, whatisthis):
-                #WriteLock.lock()
                 ctx = self.EditStatusBar.get_context_id("CodeChat")
                 self.EditStatusBar.pop(ctx)
                 self.EditStatusBar.push(ctx, "last edited by you")
@@ -147,7 +182,6 @@ class Layout:
                 end   = self.EditStatusBar.get_end_iter()
                 data  = self.EditBuffer.get_text(start, end, True)
                 self.conclient.Write("update-file", data)
-                #WriteLock.unlock()
 
 def main():
 	lyt = Layout()
