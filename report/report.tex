@@ -21,125 +21,156 @@
 
 % Project intro
 
-CodeChat is a collaborative source-code editing environment.The project 
-arose from the need to share code over IRC channels while working on 
-group projects. Group projects require frequent working session. 
-However, an academic setting often times means a lack of a shared 
-workspace and working hours, as is the case in an office environment. 
-This results in a need to have tools to enable remote collaboration. 
-The solution to this problem was to share code over paste-bin and other 
-such text sharing sites --- this leaves much to be desired. An ideal 
-solution would be an environment where collaborating programmers can 
-actively make changes to source code that would be reflected in 
-real-time, and can be discussed using an IM platform. Ideally, this 
-functionality would be in a unified platform, so these activities can 
+CodeChat is a collaborative source-code editing environment.The project
+arose from the need to share code over IRC channels while working on
+group projects. Group projects require frequent working session.
+However, an academic setting often times means a lack of a shared
+workspace and working hours, as is the case in an office environment.
+This results in a need to have tools to enable remote collaboration.
+The solution to this problem was to share code over paste-bin and other
+such text sharing sites --- this leaves much to be desired. An ideal
+solution would be an environment where collaborating programmers can
+actively make changes to source code that would be reflected in
+real-time, and can be discussed using an IM platform. Ideally, this
+functionality would be in a unified platform, so these activities can
 be done seamlessly. This desire led to the idea of CodeChat.
 
 % Languages intro
 
-When planning the project, we were faced with the choice of which 
-programming language(s) to use.We wanted to use a language with good 
-networking support and a good concurrency model. We also wanted a 
-language that is simple and intuitively clear, even if that meant that 
-the code was more verbose. These requirements led us to choose Go as 
-the primary language for the project. After the system was implemented, 
-we were curious how the developer and user experience would change if 
-implemented in a language with an opposing paradigm to Go: this led us 
-to try to implement select portions of the code in Python. This 
-exposure to multiple languages gave certain insights into how these two 
+When planning the project, we were faced with the choice of which
+programming language(s) to use.We wanted to use a language with good
+networking support and a good concurrency model. We also wanted a
+language that is simple and intuitively clear, even if that meant that
+the code was more verbose. These requirements led us to choose Go as
+the primary language for the project. After the system was implemented,
+we were curious how the developer and user experience would change if
+implemented in a language with an opposing paradigm to Go: this led us
+to try to implement select portions of the code in Python. This
+exposure to multiple languages gave certain insights into how these two
 languages relate to one another.
 
 \section*{Architecture}
 
-As this application requires connecting various users together, we 
-figured that a client-server approach would be ideal. We also thought 
-it would be best to implement the server with a modular and 
-language-agnostic text protocol. While this may introduce added 
-overhead in terms of performance, code size, and design/development 
-time, the benefits of being able to create clients in a variety of 
-languages, potentially implementing unique subsets of the server's 
-commands, far outweigh any performance hits. The general architecture 
-is a simple command protocol whereby a client can issue a command, and 
-some optional payload, which the server then processes and writes back 
-to all the other clients, as well as a status message to the issuing 
+As this application requires connecting various users together, we
+figured that a client-server approach would be ideal. We also thought
+it would be best to implement the server with a modular and
+language-agnostic text protocol. While this may introduce added
+overhead in terms of performance, code size, and design/development
+time, the benefits of being able to create clients in a variety of
+languages, potentially implementing unique subsets of the server's
+commands, far outweigh any performance hits. The general architecture
+is a simple command protocol whereby a client can issue a command, and
+some optional payload, which the server then processes and writes back
+to all the other clients, as well as a status message to the issuing
 client.
 
 \subsection*{Protocol}
 
-This modularity allows the server to implement various commands and 
-distribute the commands back to the connected clients. The clients, 
-however can implement any particular subset of the server's commands, 
-they only have to implement the bare minimum, connect and exit, to talk 
-to the server. This means that while our server has the ability to 
-support collaborative text editing, any client can simply implement a 
-chat program with the same server, and ignore any unsupported commands 
+This modularity allows the server to implement various commands and
+distribute the commands back to the connected clients. The clients,
+however can implement any particular subset of the server's commands,
+they only have to implement the bare minimum, connect and exit, to talk
+to the server. This means that while our server has the ability to
+support collaborative text editing, any client can simply implement a
+chat program with the same server, and ignore any unsupported commands
 from the server. Very cool.
 
-To achieve language-agnosticism, we implemented a JSON protocol. We 
-chose JSON because it is quickly (if not already) becoming a standard 
-in server communications and most languages include libraries and 
-packages for creating JSON objects. Additionally, since JSON is simply 
-text, it can be very easily written to web sockets/connections in any 
-language. I mentioned earlier the trade-offs, this is because when you 
-implement a client and a server in the same language, you can take 
-advantage of expected language features on both sides of the 
-connection. This is especially the case in a language like Go, whereby 
-communication across the network can essentially be the same as 
+To achieve language-agnosticism, we implemented a JSON protocol. We
+chose JSON because it is quickly (if not already) becoming a standard
+in server communications and most languages include libraries and
+packages for creating JSON objects. Additionally, since JSON is simply
+text, it can be very easily written to web sockets/connections in any
+language. I mentioned earlier the trade-offs, this is because when you
+implement a client and a server in the same language, you can take
+advantage of expected language features on both sides of the
+connection. This is especially the case in a language like Go, whereby
+communication across the network can essentially be the same as
 communication across threads (with known/expected data-types).
 
-Currently implemented commands are: ``connect'', ``exit'', 
+Currently implemented commands are: ``connect'', ``exit'',
 ``update-file'', ``message''.
 
 \subsection*{Server}
 
-The server is intended to be running on some network machine with a 
-publicly available IP address, it can additionally be run locally --- 
-but this inhibits the usefulness outside of debugging purposes. The 
-program establishes a network connection and loops listening for 
-incoming connections (as most servers do), when it receives a 
-connection, it spawns a separate ``goroutine'' (a lightweight thread) 
-to handle this connections commands, then continues listening for more 
+The server is intended to be running on some network machine with a
+publicly available IP address, it can additionally be run locally ---
+but this inhibits the usefulness outside of debugging purposes. The
+program establishes a network connection and loops listening for
+incoming connections (as most servers do), when it receives a
+connection, it spawns a separate ``goroutine'' (a lightweight thread)
+to handle this connections commands, then continues listening for more
 connections.
 
-Each connection is handled by a separate goroutine, and is encapsulated 
-in a Client data-type, which keeps track of each connected client's 
-username, connection handle, and the associated server. The goroutine 
-listens for incoming data on the connection, then proceeds to parse a 
-command from the JSON data. As it parses the command, it builds up an 
-IPC message type containing an error code, a response type to be 
-written back to this client, and a response type to be written back to 
-the other clients. When the command has been parsed, this IPC message 
-is then sent through a channel to the broadcast goroutine, which writes 
+Each connection is handled by a separate goroutine, and is encapsulated
+in a Client data-type, which keeps track of each connected client's
+username, connection handle, and the associated server. The goroutine
+listens for incoming data on the connection, then proceeds to parse a
+command from the JSON data. As it parses the command, it builds up an
+IPC message type containing an error code, a response type to be
+written back to this client, and a response type to be written back to
+the other clients. When the command has been parsed, this IPC message
+is then sent through a channel to the broadcast goroutine, which writes
 back the appropriate JSON to each client.
 
-Writing back to clients is handled in a single goroutine (broadcast) 
-which is established before any incoming connections are connected. 
-This thread reads on an internal channel, which is written to by each 
-client thread. When it gets an IPC message, it writes the return status 
+Writing back to clients is handled in a single goroutine (broadcast)
+which is established before any incoming connections are connected.
+This thread reads on an internal channel, which is written to by each
+client thread. When it gets an IPC message, it writes the return status
 to the requesting client, and the response to the other clients.
 
 \subsection*{Client}
 
-The client essentially takes user input, serializes it into a JSON 
-command and writes it to the server. In the Go implementation, we were 
-able to encapsulate the client as a nice little library, exporting the 
-Connect(username, port), Write(command, payload), Read() functions, as 
-well as types for Client, and Messages. When combined with a GUI, the 
-program can simply pull user input from various parts of the interface, 
-and send them to the server through the client library. It then simply 
-needs to spawn a thread which reads from the server and updates the 
-appropriate parts of the interface. Care had to be taken when reading 
-from and writing to the interface, especially when operating in 
-different threads, since GTK is not thread-safe. GTK provides a set of 
-functions for protecting against data races and invalidated references, 
+The client essentially takes user input, serializes it into a JSON
+command and writes it to the server. In the Go implementation, we were
+able to encapsulate the client as a nice little library, exporting the
+Connect(username, port), Write(command, payload), Read() functions, as
+well as types for Client, and Messages. When combined with a GUI, the
+program can simply pull user input from various parts of the interface,
+and send them to the server through the client library. It then simply
+needs to spawn a thread which reads from the server and updates the
+appropriate parts of the interface. Care had to be taken when reading
+from and writing to the interface, especially when operating in
+different threads, since GTK is not thread-safe. GTK provides a set of
+functions for protecting against data races and invalidated references,
 gdk_threads_enter() and gdk_threads_exit().
 
 \section*{Languages}
 
+One of the first decisions we had to make in the project was what
+language(s) to implement the project in. However, this was made easier
+by the fact that we knew what we were planning on implementing, and
+could see if languages would be suited to the task. Our first language
+criteria was having a modern language. All members of our group are
+very familiar with C/++, and wanted to use a language developed with
+today's coding environment in mind. Next, we wanted to use a language
+with lower overhead to improve running time. As the end-user experience
+is largely interactive, responsiveness is a key consideration. We
+decided that a language with poor performance would be unsuitable.
+Additionally, we decided we needed a language with a good concurrency
+model. As the server portion of CodeChat would be interfacing with
+multiple clients, and each client would have portions operating
+independantly, the decision to have multi-threaded code came easy, and
+we wanted a language with good native support for that. Finally, we
+decided that we would prefer a language with intuitive clarity, even if
+that came at the cost of brevity. Our reasoning here was that writing
+100 lines of code in one hour was preferable to writing 10 lines of
+code in 10 hours. Ultimately, these factors led us to choose Go as the
+primary language. After we implemented the project, we decided to try
+to implement the client in Python, a language we thought differed from
+Go in several areas.
 
 
 \subsection*{Go}
 
+% Briefly introduce golang here
+
+% Discuss language features here
+
 \subsection*{Python}
+
+% Briefly introduce golang here
+
+% Discuss language features here
+
 
 \end{document}
