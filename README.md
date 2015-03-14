@@ -63,7 +63,7 @@ Next you can fire up the go client:
     $ ./goclient
 
 This will prompt you with a dialog box asking for a username and
-an address. The address should be of the form <address>:<port>.
+an address. The address should be of the form "address:port".
 If blank, address will default to "localhost:8080".
 
 Similarly you can run the python client:
