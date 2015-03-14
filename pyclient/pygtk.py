@@ -128,6 +128,7 @@ class Layout:
                 #if not self.editing:
                 res = self.conclient.Read()
                 if res:
+                        gtk.gdk.threads_enter()
                         cmd = res["cmd"]
                         if cmd == "update-file":
                                 ctx = self.EditStatusBar.get_context_id("CodeChat")
@@ -144,6 +145,7 @@ class Layout:
                                 self.ChatBuffer.insert(endIter,res["from"] + " has quit (" + res["payload"] + ")\n")
                         #pause thread for a quarter second
                         #time.sleep(0.25)
+                        gtk.gdk.threads_exit()
                         doRead()
 
         def connect(self, whatisthis):
