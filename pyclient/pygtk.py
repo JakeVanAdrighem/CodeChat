@@ -131,7 +131,7 @@ class Layout:
         while True:
             print("here")
             res = self.conclient.Read()
-            print ("got message" + res)
+            print ("got message" + json.dumps(res))
             if res:
                 #gtk.gdk.threads_enter()
                 try:
