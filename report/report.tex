@@ -25,24 +25,27 @@
 
 % Project intro
 
-CodeChat is a collaborative source-code editing environment. The project
-arose from the need to share code over IRC channels while working on
-group projects. Group projects require frequent working sessions.
-However, an academic setting often times means a lack of a shared
-workspace and working hours, as is the case in an office environment.
-This results in a need to have tools to enable remote collaboration.
-The solution to this problem was to share code over paste-bin and other
-such text sharing sites --- this leaves much to be desired. An ideal
-solution would be an environment where collaborating programmers can
-actively make changes to source code that would be reflected in
-real-time, and can be discussed using an IM platform. Ideally, this
-functionality would be in a unified platform, so these activities can
-be done seamlessly. This desire led to the idea of CodeChat.
+CodeChat is a collaborative source-code editing environment. The 
+project arose from the need to share code over IRC channels while 
+working on group projects. Group projects require frequent working 
+sessions. However, an academic setting often times means a lack of a 
+shared workspace and working hours, as is the case in an office 
+environment. This results in a need to have tools to enable remote 
+collaboration. Github solves the problem of sharing code across 
+independent work-sessions, however when pair programming remotely, 
+there is no adequate solutions other than sharing code over paste-bin 
+and other such text sharing sites. Needless to say, these solutions 
+leave much to be desired. An ideal solution would be an environment 
+where collaborating programmers can actively make changes to source 
+code that would be reflected in real-time, and can be discussed using 
+an IM platform. Ideally, this functionality would be in a unified GUI 
+application, so these activities can be done seamlessly. Thus arose the
+need for CodeChat.
 
 % Languages intro
 
 When planning the project, we were faced with the choice of which
-programming language(s) to use.We wanted to use a language with good
+programming language(s) to use. We wanted to use a language with good
 networking support and a good concurrency model. We also wanted a
 language that is simple and intuitively clear, even if that meant that
 the code was more verbose. These requirements led us to choose Go as
@@ -55,41 +58,42 @@ languages relate to one another.
 
 \section*{Architecture}
 
-As this application requires connecting various users together, we
-figured that a client-server approach would be ideal. We also thought
-it would be best to implement the server with a modular and
-language-agnostic text protocol. While this may introduce added
-overhead in terms of performance, code size, and design/development
-time, the benefits of being able to create clients in a variety of
-languages, potentially implementing unique subsets of the server's
-commands, far outweigh any performance hits. The general architecture
-is a simple command protocol whereby a client can issue a command, and
-some optional payload, which the server then processes and writes back
-to all the other clients, as well as a status message to the issuing
+As this application requires connecting various users together, we 
+figured that a client-server approach would be ideal. We also thought 
+it would be best to implement the server with a modular and 
+language-agnostic text protocol. While this may introduce added 
+overhead in terms of performance, code size, and design/development 
+time, the benefits of being able to create clients in a variety of 
+languages, potentially implementing unique subsets of the server's 
+commands, far outweigh any performance hits. The general architecture 
+is a simple command protocol whereby a client can issue a command, and 
+some optional payload, which the server then processes and writes back 
+to all the other clients, as well as a status message to the issuing 
 client.
 
 \subsection*{Protocol}
 
-This modularity allows the server to implement various commands and
-distribute the commands back to the connected clients. The clients,
-however can implement any particular subset of the server's commands,
-they only have to implement the bare minimum, connect and exit, to talk
-to the server. This means that while our server has the ability to
-support collaborative text editing, any client can simply implement a
-chat program with the same server, and ignore any unsupported commands
+This modularity allows the server to implement various commands and 
+distribute the commands back to the connected clients. The clients, 
+however can implement any particular subset of the server's commands, 
+they only have to implement the bare minimum, connect and exit, to talk 
+to the server. This means that while our server has the ability to 
+support collaborative text editing, any client can simply implement a 
+chat program with the same server, and ignore any unsupported commands 
 from the server. Very cool.
 
-To achieve language-agnosticism, we implemented a messaging protocol using
-JSON. We chose JSON because it is quickly (if not already) becoming a
-standard in server communications and most languages include libraries and
-packages for creating JSON objects. Additionally, since JSON is simply
-text, it can be very easily written to web sockets/connections in any
-language. I mentioned earlier the trade-offs, this is because when you
-implement a client and a server in the same language, you can take
-advantage of expected language features on both sides of the
-connection. This is especially the case in a language like Go, whereby
-communication across the network can essentially be the same as
-communication across threads (with known/expected data-types).
+To achieve language-agnosticism, we implemented a messaging protocol 
+using JSON. We chose JSON because it is quickly (if not already) 
+becoming a standard in server communications and most languages include 
+libraries and packages for creating JSON objects. Additionally, since 
+JSON is simply text, it can be very easily written to web 
+sockets/connections in any language. I mentioned earlier the 
+trade-offs, this is because when you implement a client and a server in 
+the same language, you can take advantage of expected language features 
+on both sides of the connection. This is especially the case in a 
+language like Go, whereby communication across the network can 
+essentially be the same as communication across threads (with 
+known/expected data-types).
 
 Currently implemented commands are: ``connect'', ``exit'',
 ``update-file'', ``message''.
@@ -102,7 +106,7 @@ but this inhibits the usefulness outside of debugging purposes. The
 program establishes a network connection and loops listening for
 incoming connections (as most servers do), when it receives a
 connection, it spawns a separate ``goroutine'' (a lightweight thread)
-to handle this connections commands, then continues listening for more
+to handle this connection's commands, then continues listening for more
 connections.
 
 Each connection is handled by a separate goroutine, and is encapsulated
@@ -237,25 +241,24 @@ says something about the language that it would be difficult to have an
 ``Obfuscated Go Contest." One of Go's language design goals was the 
 principle that ``50 lines of clear, understandable, well documented 
 code, is better than 10 lines of clever, confusing code." This isn't to 
-say that go is verbose, but rather it is coherent and easily
+say that go is verbose, but rather it is coherent and easily 
 understandable.
 
-One part of this philosophy is the enforcing of strict error checking.
-In the Go compilation process, any use of the language that would
-constitute a warning halts the compilation process. In this way, the
-Go compiler forces the user to conform to the clean style Go espouses.
-However, this feature is a double edged sword. Any identifier declared
-but not used constitutes a warning, and thus stops compilation. While
-this might not seem like a terrible feature, this rule also applies to
-libraries, meaning that library imports have to be modified when a
-function isn't used. The end result of this was frequent failed
-compilation when testing new features, as we would make declarations
-with the intention of implementing them at a later date. However,
-this stylistic enforcement helped in code organization by ensuring
-no stone was unturned in the implementation. This differed from the
-Python implementation, where we overlooked certain things in
-development, which would eventually cause debugging issues down the
-line. 
+One part of this philosophy is the enforcing of strict error checking. 
+In the Go compilation process, any use of the language that would 
+constitute a warning halts the compilation process. In this way, the Go 
+compiler forces the user to conform to the clean style Go espouses. 
+However, this feature is a double edged sword. Any identifier declared 
+but not used constitutes a warning, and thus stops compilation. While 
+this might not seem like a terrible feature, this rule also applies to 
+libraries, meaning that library imports have to be modified when a 
+function isn't used. The end result of this was frequent failed 
+compilation when testing new features, as we would make declarations 
+with the intention of implementing them at a later date. However, this 
+stylistic enforcement helped in code organization by ensuring no stone 
+was unturned in the implementation. This differed from the Python 
+implementation, where we overlooked certain things in development, 
+which would eventually cause debugging issues down the line. 
 
 Stylistic points aside, go provides an excellent model for handling 
 concurrency, which is best summed up by the phrase ``it is better to 
@@ -264,9 +267,9 @@ From this comes the idea of goroutines and channels. Goroutines, a pun
 on coroutine, are lightweight threads built in to the language. 
 Channels are essentially safe, concurrent, blocking buffers which 
 facilitate communication across goroutines. In the server, we used 
-goroutines to handle each connection to the server, and a broadcasting
-goroutine which handles writing back to each connection. This ensures
-that reads on any given client only occurs in one thread, and writes to
+goroutines to handle each connection to the server, and a broadcasting 
+goroutine which handles writing back to each connection. This ensures 
+that reads on any given client only occurs in one thread, and writes to 
 all clients only occur on a single thread.
 
 
@@ -274,75 +277,68 @@ all clients only occur on a single thread.
 
 % Briefly introduce python here
 
-Python is an interpreted, high-level, and imperative programming language
-originally developed by Guido Van Rossum in 1991. Based partly on the
-ABC language, Python emphasises succinct, beautiful, simple code.
-Python is one of the more popular modern languages, with garbage collection,
-dynamic typing, and a robust community. Python code is generally highly
-abstracted, with the intended result being the programmer telling the
-machine what to do with little consideration to hardware or underlying
-systems, making the code very portable.
+Python is an interpreted, high-level, and imperative programming 
+language originally developed by Guido Van Rossum in 1991. Based partly 
+on the ABC language, Python emphasises succinct, beautiful, simple 
+code. Python is one of the more popular modern languages, with garbage 
+collection, dynamic typing, and a robust community. Python code is 
+generally highly abstracted, with the intended result being the 
+programmer telling the machine what to do with little consideration to 
+hardware or underlying systems, making the code very portable.
 
 % Discuss language features here
 
-In implementing the Python client, we used a number of key features
-of the Python programming language. Contrasting with the Go implementation,
-we made use of the object-oriented features of Python. This aided in code
-organization, as we were able to pass objects around as opposed to structs,
-and have member functions for handling them. One key problem we ran into
-while developing Python were concurrency issues with the native network
-library. Buffered
-synchronous reads and writes proved very challenging to implement, which
-are an integral part of the program. The function to receive incoming
-network messages is blocking and buffered, leading to messages being
-concatenated by the receiver. Furthermore, making the function non-blocking
-caused the system resources to be hogged by the receiver.
-Because of this, we were able to implement only writing to the network,
-not reading from it.
-We suspect using the \verb+asyncore+ library would solve most of these
-issues with asynchronous network reads.
+In implementing the Python client, we used a number of key features of 
+the Python programming language. Contrasting with the Go 
+implementation, we made use of the object-oriented features of Python. 
+This aided in code organization, as we were able to pass objects around 
+as opposed to structs, and have member functions for handling them. One 
+key problem we ran into while developing Python were concurrency issues 
+with the native network library. The function to receive incoming 
+network messages is blocking and buffered, leading to messages being 
+grouped by the receiver, and not being responsive. Furthermore, making 
+the function non-blocking caused the system resources to be hogged by 
+the receiver. Because of this, we were able to implement only writing 
+to the network, not reading from it. We suspect using the 
+\verb+asyncore+ library would solve most of these issues with 
+asynchronous network reads.
 
 \subsection*{Comparison}
 
-Following our completion of the client in Go, we decided to try to
-implement the
-client in Python as well, to see how a language designed with brevity
-in mind compares to one that partially eschews it for further simplicity
-and less abstraction. In doing so, we noticed several key differences
-in the languages we used. One such difference was in the debugging process,
-specifically in the ease in debugging Go code. Since Go code is compiled,
-with harsh requirements, static code analysis is done, making catching
-certain types of errors very easy. In contrast, Python is interpreted,
-with no static analysis being done. This resulted in lots of development
-difficulties, as errors in the code had to be hunted down very methodically.
-Another key difference in the languages was the difference in code length.
-The client written in Go ended up being around
-490 %Put correct number here
-lines of code, while the Python client ended up being around
-270  %Put correct number here
-lines of code. These differences are consistent with our expectations
-regarding development, with the Python living up to it's expectations
-in regards to length. One major difference we found between Python and
-Go was the concurrency model used by the language. Python has simple
-thread support through the use of a library. However, it features
-few useful concurrency primitives. In contrast, the concurrency model
-built into the Go language was robust and powerful, making
-multi-threaded applications easy to develop.
-Unfortunately, because we were unable to complete the Python implementation,
-we have an incomplete analysis of the differences between Python and Go.
+Following our completion of the client in Go, we decided to try to 
+implement the client in Python as well, to see how a language designed 
+with brevity in mind compares to one that partially eschews it for 
+further simplicity and less abstraction. In doing so, we noticed 
+several key differences in the languages we used. One such difference 
+was in the debugging process, specifically in the ease in debugging Go 
+code. Since Go code is compiled, with harsh requirements, static code 
+analysis is done, making catching certain types of errors very easy. In 
+contrast, Python is interpreted, with no static analysis being done. 
+This resulted in lots of development difficulties, as errors in the 
+code had to be hunted down very methodically. Another key difference in 
+the languages was the difference in code length. The client written in 
+Go ended up being around 490 %Put correct number here lines of code, 
+while the Python client ended up being around 270  %Put correct number 
+here lines of code. These differences are consistent with our 
+expectations regarding development, with the Python living up to it's 
+expectations in regards to length. One major difference we found 
+between Python and Go was the concurrency model used by the language. 
+Python has simple thread support through the use of a library. However, 
+it features few useful concurrency primitives. In contrast, the 
+concurrency model built into the Go language was robust and powerful, 
+making multi-threaded applications easy to develop. Unfortunately, 
+because we were unable to complete the Python implementation, we have 
+an incomplete analysis of the differences between Python and Go.
 
 \section*{Testing}
 
-Simple stress tests performed on the server yielded around
-$\unitfrac[100]{messages}{second}$ 
-across a network, and around
-$\unitfrac[500]{messages}{second}$
-on a 
-local instance. These tests simply monitored the ability of the server 
-to handle a single command and write back to the client. No other 
-clients were connected to the server. Ideally the tests would be 
-written to be more comprehensive to accommodate for a variety of 
-different parameters:
+Simple stress tests performed on the server yielded around 
+$\unitfrac[100]{messages}{second}$ across a network, and around 
+$\unitfrac[500]{messages}{second}$ on a local instance. These tests 
+simply monitored the ability of the server to handle a single command 
+and write back to the client. No other clients were connected to the 
+server. Ideally the tests would be written to be more comprehensive to 
+accommodate for a variety of different parameters:
 
 \begin{itemize}
 	\item Length of payload (message or file)
