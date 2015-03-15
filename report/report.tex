@@ -286,12 +286,26 @@ systems, making the code very portable.
 % Discuss language features here
 
 In implementing the Python client, we used a number of key features
-of the Python programming language.
-%TODO add features we used
+of the Python programming language. Contrasting with the Go implementation,
+we made use of the object-oriented features of Python. This aided in code
+organization, as we were able to pass objects around as opposed to structs,
+and have member functions for handling them. One key problem we ran into
+while developing Python were concurrency issues with the native network
+library. Buffered
+synchronous reads and writes proved very challenging to implement, which
+are an integral part of the program. The function to receive incoming
+network messages is blocking and buffered, leading to messages being
+concatenated by the receiver. Furthermore, making the function non-blocking
+caused the system resources to be hogged by the receiver.
+Because of this, we were able to implement only writing to the network,
+not reading from it.
+We suspect using the \verb+asyncore+ library would solve most of these
+issues with asynchronous network reads.
 
 \subsection*{Comparison}
 
-Following our completion of the client in Go, we decided to implement the
+Following our completion of the client in Go, we decided to try to
+implement the
 client in Python as well, to see how a language designed with brevity
 in mind compares to one that partially eschews it for further simplicity
 and less abstraction. In doing so, we noticed several key differences
@@ -303,16 +317,19 @@ with no static analysis being done. This resulted in lots of development
 difficulties, as errors in the code had to be hunted down very methodically.
 Another key difference in the languages was the difference in code length.
 The client written in Go ended up being around
-450 %Put correct number here
+490 %Put correct number here
 lines of code, while the Python client ended up being around
-260  %Put correct number here
-lines of code. Interestingly, if the code working with the GTK library isn't
-counted, the programs are approximately the same length. This ran counter
-to our expectations, with Python having a reputation for tight, succinct code.
-While the discrepancy might be due to the specifics of the program, it was
-interesting to see a Python program that was just as long as a similar program
-written in a language designed to compete with C.
-%TODO more differences
+270  %Put correct number here
+lines of code. These differences are consistent with our expectations
+regarding development, with the Python living up to it's expectations
+in regards to length. One major difference we found between Python and
+Go was the concurrency model used by the language. Python has simple
+thread support through the use of a library. However, it features
+few useful concurrency primitives. In contrast, the concurrency model
+built into the Go language was robust and powerful, making
+multi-threaded applications easy to develop.
+Unfortunately, because we were unable to complete the Python implementation,
+we have an incomplete analysis of the differences between Python and Go.
 
 \section*{Testing}
 
