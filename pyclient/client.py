@@ -48,8 +48,8 @@ class ConnectionClient():
         if not self.con:
             return()
         data = self.con.recv(4096)
-        if json.loads(data):
-		return json.loads(data)
+        if json.loads(data.decode('ascii')):
+		return json.loads(data.decode('ascii'))
 	else:
 		print("bad data")
 

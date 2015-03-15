@@ -124,39 +124,39 @@ class Layout:
 
 
         def doRead(self):
-                #eventually implement it so that we
-                #update less frequently when we're editing
-                #if not self.editing:
-                print( "in doRead thread")
-                while True:
-			res = self.conclient.Read()
-			print ("got message" + res)
-			if res:
-				#gtk.gdk.threads_enter()
-				try:
-					cmd = res["cmd"]
-				except:
-					cmd = "none"
-				if cmd == "return-status":
-					print("return status")
-				if cmd == "update-file":
-					ctx = self.EditStatusBar.get_context_id("CodeChat")
-					self.EditStatusBar.pop(ctx)
-					self.EditStatusBar.push(ctx, "last edited by " + res["from"])
-					self.EditBuffer.SetText(res["payload"])
-				elif cmd   == "client-connect":
-					endIter = self.ChatBuffer.get_end_iter()
-					self.ChatBuffer.insert(endIter,res["from"] + " has entered.\n")
-				#elif cmd == "success":
-					#successful connection
-				elif cmd == "client-exit":
-					endIter = self.ChatBuffer.get_end_iter()
-					self.ChatBuffer.insert(endIter,res["from"] + " has quit (" + res["payload"] + ")\n")
-				elif cmd == "none":
-					print("weird shit happened")
-				#pause thread for a quarter second
-				#time.sleep(0.25)
-				#gtk.gdk.threads_exit()
+            #eventually implement it so that we
+            #update less frequently when we're editing
+            #if not self.editing:
+            print( "in doRead thread")
+            while True:
+				res = self.conclient.Read()
+				print ("got message" + res)
+				if res:
+					#gtk.gdk.threads_enter()
+					try:
+						cmd = res["cmd"]
+					except:
+						cmd = "none"
+					if cmd == "return-status":
+						print("return status")
+					if cmd == "update-file":
+						ctx = self.EditStatusBar.get_context_id("CodeChat")
+						self.EditStatusBar.pop(ctx)
+						self.EditStatusBar.push(ctx, "last edited by " + res["from"])
+						self.EditBuffer.SetText(res["payload"])
+					elif cmd   == "client-connect":
+						endIter = self.ChatBuffer.get_end_iter()
+						self.ChatBuffer.insert(endIter,res["from"] + " has entered.\n")
+					#elif cmd == "success":
+						#successful connection
+					elif cmd == "client-exit":
+						endIter = self.ChatBuffer.get_end_iter()
+						self.ChatBuffer.insert(endIter,res["from"] + " has quit (" + res["payload"] + ")\n")
+					elif cmd == "none":
+						print("weird shit happened")
+					#pause thread for a quarter second
+					#time.sleep(0.25)
+					#gtk.gdk.threads_exit()
 
         def connect(self, whatisthis):
                 #we have to include the username as a member
